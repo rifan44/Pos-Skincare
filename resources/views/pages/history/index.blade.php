@@ -7,11 +7,11 @@
     
     <!-- HEADER HALAMAN -->
     <div class="row align-items-end mb-4">
-        <div class="col-sm-8">
+        <div class="col-sm-8 align-self-start">
             <h3 class="font-serif fw-bold text-dark mb-1">Riwayat Transaksi</h3>
             <p class="text-muted mb-0" style="font-size: 0.95rem;">Daftar seluruh transaksi kasir yang telah berhasil diproses.</p>
         </div>
-        <div class="col-sm-4 mt-3 mt-sm-0">
+        <div class="col-sm-4 text-sm-end mt-3 mt-sm-0">
             <form action="{{ route('history.index') }}" method="GET" class="d-flex flex-wrap justify-content-sm-end align-items-center gap-2">
                 <input type="date" name="start_date" class="form-control form-control-sm" aria-label="Tanggal mulai" value="{{ request('start_date') }}" style="max-width: 150px;" required>
                 <input type="date" name="end_date" class="form-control form-control-sm" aria-label="Tanggal akhir" value="{{ request('end_date') }}" style="max-width: 150px;" required>

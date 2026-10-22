@@ -9,7 +9,7 @@
         <!-- Logo Kiri -->
         <a class="navbar-brand d-flex align-items-center gap-2 m-0" href="{{ url('/') }}">
             @if($appSetting && $appSetting->logo)
-                <img src="{{ asset('storage/' . $appSetting->logo) }}" class="rounded-circle shadow-sm" width="38" height="38" style="object-fit: cover;">
+                <img src="{{ asset('storage/' . $appSetting->logo) }}" class="rounded-circle shadow-sm" width="38" height="38" style="object-fit: cover;" alt="Logo {{ $appSetting->store_name ?? 'toko' }}">
             @else
                 <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px; background-color: {{ $primaryColor }}; font-size: 14px;">
                     {{ substr($appSetting->store_name ?? 'SK', 0, 2) }}
@@ -21,14 +21,14 @@
         </a>
 
         <!-- Tombol Hamburger (Mobile) -->
-        <button class="navbar-toggler border-0 shadow-none px-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
+        <button class="navbar-toggler border-0 shadow-none px-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-expanded="false" aria-label="Buka navigasi">
             <i class="fas fa-bars fs-4 text-dark"></i>
         </button>
 
         <div class="offcanvas offcanvas-end" style="background-color: var(--bg-cream);" tabindex="-1" id="offcanvasNavbar">
             <div class="offcanvas-header border-bottom py-3">
                 <h6 class="offcanvas-title font-serif fw-bold mb-0">Navigasi</h6>
-                <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas" aria-label="Tutup navigasi"></button>
             </div>
             <div class="offcanvas-body">
                 
@@ -45,10 +45,10 @@
                         <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ request()->routeIs('history.*') ? 'fw-bold' : '' }}" style="{{ request()->routeIs('history.*') ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('history.index') }}">Riwayat</a></li>
                     @else
                         <!-- Menu Khusus Tamu (Guest) -->
-                        <li class="nav-item"><a class="nav-link fw-bold px-3 py-2 hover-primary" href="{{ url('/') }}" style="color: var(--text-dark);">Beranda</a></li>
-                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="#features" style="color: var(--text-muted);">Fitur Utama</a></li>
-                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="#" style="color: var(--text-muted);">Tentang Kami</a></li>
-                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="#" style="color: var(--text-muted);">Kontak</a></li>
+                        <li class="nav-item"><a class="nav-link fw-bold px-3 py-2 hover-primary" href="{{ route('landing') }}" data-bs-dismiss="offcanvas" style="color: var(--text-dark);">Beranda</a></li>
+                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="{{ route('landing') . '#features' }}" data-bs-dismiss="offcanvas" style="color: var(--text-muted);">Fitur Utama</a></li>
+                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="{{ route('landing') . '#about' }}" data-bs-dismiss="offcanvas" style="color: var(--text-muted);">Tentang Kami</a></li>
+                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="{{ route('landing') . '#contact' }}" data-bs-dismiss="offcanvas" style="color: var(--text-muted);">Kontak</a></li>
                     @endauth
                 </ul>
                 
