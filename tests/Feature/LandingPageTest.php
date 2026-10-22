@@ -46,6 +46,20 @@ class LandingPageTest extends TestCase
             ->assertDontSee(route('dashboard.index'), false);
     }
 
+    public function test_landing_page_renders_the_configured_about_image(): void
+    {
+        Setting::create([
+            'store_name' => 'Test Skincare',
+            'about_image' => 'settings/about.jpg',
+        ]);
+
+        $response = $this->get(route('landing'));
+
+        $response->assertOk()
+            ->assertSee(asset('storage/settings/about.jpg'), false)
+            ->assertSee('alt="Tentang Test Skincare"', false);
+    }
+
     public function test_history_title_stays_at_the_top_of_its_page_header(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

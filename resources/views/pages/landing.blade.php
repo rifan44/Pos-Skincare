@@ -37,6 +37,21 @@
         font-weight: 500;
         letter-spacing: -1px;
     }
+    .landing-image-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        background-color: #f0e9e4;
+    }
+    .landing-image-frame img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
     .btn-hero {
         background-color: var(--primary-color);
         color: #fff;
@@ -141,9 +156,11 @@
             
             <div class="col-lg-6 text-center">
                 @if($appSetting && $appSetting->landing_image)
-                    <img src="{{ asset('storage/' . $appSetting->landing_image) }}" class="img-fluid rounded-4 shadow" style="object-fit: cover; max-height: 550px; width: 100%;" alt="Tampilan {{ $appSetting->store_name ?? 'toko skincare' }}">
+                    <div class="landing-image-frame rounded-4 shadow">
+                        <img src="{{ asset('storage/' . $appSetting->landing_image) }}" class="hero-image" alt="Tampilan {{ $appSetting->store_name ?? 'toko skincare' }}" fetchpriority="high">
+                    </div>
                 @else
-                    <div class="rounded-4 d-flex align-items-center justify-content-center w-100" style="background-color: #f0e9e4; height: 500px;">
+                    <div class="landing-image-frame rounded-4 d-flex align-items-center justify-content-center shadow-sm">
                         <i class="fas fa-spa" style="font-size: 6rem; color: #fff;"></i>
                     </div>
                 @endif
@@ -204,10 +221,13 @@
         </div>
         <div class="col-lg-6 order-1 order-lg-2">
             <div class="position-relative">
-                <div class="rounded-4" style="background-color: var(--primary-color); opacity: 0.15; width: 100%; height: 100%; position: absolute; top: 20px; left: -20px; z-index: 1;"></div>
-                <!-- Placeholder estetik berkelas jika gambar asli belum ada -->
-                <div class="rounded-4 d-flex align-items-center justify-content-center position-relative shadow-sm" style="background-color: var(--card-bg); border: 1px solid var(--border-color); height: 400px; z-index: 2;">
-                    <i class="fas fa-pump-soap" style="font-size: 8rem; color: var(--primary-color); opacity: 0.3;"></i>
+                <div class="rounded-4" aria-hidden="true" style="background-color: var(--primary-color); opacity: 0.15; width: 100%; height: 100%; position: absolute; top: 20px; left: -20px; z-index: 1;"></div>
+                <div class="landing-image-frame rounded-4 d-flex align-items-center justify-content-center position-relative shadow-sm" style="border: 1px solid var(--border-color); z-index: 2;">
+                    @if($appSetting?->about_image)
+                        <img src="{{ asset('storage/' . $appSetting->about_image) }}" class="about-image" alt="Tentang {{ $appSetting->store_name ?? 'Skincare POS' }}" loading="lazy" decoding="async">
+                    @else
+                        <i class="fas fa-pump-soap" aria-hidden="true" style="font-size: 8rem; color: var(--primary-color); opacity: 0.3;"></i>
+                    @endif
                 </div>
             </div>
         </div>

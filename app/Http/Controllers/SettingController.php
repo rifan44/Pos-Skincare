@@ -27,7 +27,7 @@ class SettingController extends Controller
     public function update(Request $request)
     {
         $setting = Setting::first();
-        
+
         $request->validate([
             'store_name' => 'required|string|max:255',
             'store_address' => 'required|string',
@@ -39,10 +39,14 @@ class SettingController extends Controller
             'primary_color' => 'required|string|max:7',
             'font_family' => 'required|string',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'landing_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'landing_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:8192', 'dimensions:min_width=1200,min_height=800'],
+            'about_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:8192', 'dimensions:min_width=1200,min_height=800'],
+        ], [
+            'landing_image.dimensions' => 'Gambar utama landing page harus berukuran minimal 1200 × 800 piksel.',
+            'about_image.dimensions' => 'Gambar section Tentang harus berukuran minimal 1200 × 800 piksel.',
         ]);
 
-        $data = $request->except(['logo', 'landing_image']);
+        $data = $request->except(['logo', 'landing_image', 'about_image']);
 
         // Handle Upload Logo Bulat Navbar
         if ($request->hasFile('logo')) {
@@ -56,7 +60,12 @@ class SettingController extends Controller
             $data['landing_image'] = $landingPath;
         }
 
-        $setting ??= new Setting();
+        if ($request->hasFile('about_image')) {
+            $aboutPath = $request->file('about_image')->store('settings', 'public');
+            $data['about_image'] = $aboutPath;
+        }
+
+        $setting ??= new Setting;
         $setting->fill($data)->save();
 
         return back()->with('success', 'Pengaturan berhasil diperbarui secara menyeluruh!');

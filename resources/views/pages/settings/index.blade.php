@@ -100,14 +100,25 @@
                             <label class="fw-bold small text-muted mb-2">Deskripsi Singkat</label>
                             <textarea name="landing_description" class="form-control bg-light" rows="3" required>{{ $setting->landing_description }}</textarea>
                         </div>
-                        <div class="col-12">
-                            <label class="fw-bold small text-muted mb-2">Gambar Banner / Ilustrasi</label>
-                            <div class="d-flex align-items-center gap-3">
-                                @if($setting->landing_image)
-                                    <img src="{{ asset('storage/' . $setting->landing_image) }}" class="rounded-3 border" width="80" height="80" style="object-fit: cover;">
-                                @endif
-                                <input type="file" name="landing_image" class="form-control bg-light w-auto flex-grow-1" accept="image/*">
-                            </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold small text-muted mb-2">Gambar Utama / Hero</label>
+                            @if($setting->landing_image)
+                                <div class="landing-image-preview rounded-3 border mb-2">
+                                    <img src="{{ asset('storage/' . $setting->landing_image) }}" alt="Pratinjau gambar utama landing page">
+                                </div>
+                            @endif
+                            <input type="file" name="landing_image" class="form-control bg-light" accept="image/jpeg,image/png,image/webp">
+                            <div class="form-text">Minimal 1200 × 800 piksel, maksimal 8 MB. Gunakan gambar resolusi tinggi agar tetap tajam.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold small text-muted mb-2">Gambar Section Tentang</label>
+                            @if($setting->about_image)
+                                <div class="landing-image-preview rounded-3 border mb-2">
+                                    <img src="{{ asset('storage/' . $setting->about_image) }}" alt="Pratinjau gambar section Tentang">
+                                </div>
+                            @endif
+                            <input type="file" name="about_image" class="form-control bg-light" accept="image/jpeg,image/png,image/webp">
+                            <div class="form-text">Minimal 1200 × 800 piksel, maksimal 8 MB. Gunakan gambar resolusi tinggi agar tetap tajam.</div>
                         </div>
                         <!-- Font Family Dropdown disembunyikan agar dipaksa pakai Serif Premium Global -->
                         <input type="hidden" name="font_family" value="Playfair Display">
@@ -148,6 +159,22 @@
 
 <!-- Tambahkan sedikit JS agar Tab Active mewarisi warna primer -->
 <style>
+    .landing-image-preview {
+        position: relative;
+        aspect-ratio: 4 / 3;
+        max-width: 360px;
+        overflow: hidden;
+        background-color: var(--bg-cream);
+    }
+
+    .landing-image-preview img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
     .nav-pills .nav-link.active {
         background-color: var(--primary-color) !important;
         border-color: var(--primary-color) !important;
