@@ -9,7 +9,18 @@ class SettingController extends Controller
 {
     public function index()
     {
-        $setting = Setting::first();
+        $setting = Setting::first() ?? new Setting([
+            'store_name' => 'Skincare POS',
+            'store_address' => '',
+            'store_phone' => '',
+            'receipt_footer' => '',
+            'landing_title' => 'Solusi Cerdas Kelola',
+            'landing_text_highlight' => 'Toko Skincare',
+            'landing_description' => '',
+            'primary_color' => '#ffb6b9',
+            'font_family' => 'Plus Jakarta Sans',
+        ]);
+
         return view('pages.settings.index', compact('setting'));
     }
 
@@ -45,7 +56,8 @@ class SettingController extends Controller
             $data['landing_image'] = $landingPath;
         }
 
-        $setting->update($data);
+        $setting ??= new Setting();
+        $setting->fill($data)->save();
 
         return back()->with('success', 'Pengaturan berhasil diperbarui secara menyeluruh!');
     }
