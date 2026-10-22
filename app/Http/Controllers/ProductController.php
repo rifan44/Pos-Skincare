@@ -16,6 +16,8 @@ class ProductController extends Controller
     {
         $filters = $request->validate([
             'search' => 'nullable|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'brand' => 'nullable|string|max:255',
             'category_id' => 'nullable|integer',
             'brand_id' => 'nullable|integer',
             'sort' => 'nullable|in:az,za',
@@ -31,6 +33,16 @@ class ProductController extends Controller
             $query->where('brand_id', $filters['brand_id']);
         }
 
+        if (! empty($filters['category'])) {
+            $query->whereHas('category', fn ($categoryQuery) => $categoryQuery
+                ->where('name', 'like', '%'.$filters['category'].'%'));
+        }
+
+        if (! empty($filters['brand'])) {
+            $query->whereHas('brand', fn ($brandQuery) => $brandQuery
+                ->where('name', 'like', '%'.$filters['brand'].'%'));
+        }
+
         if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($query) use ($search) {
@@ -43,10 +55,8 @@ class ProductController extends Controller
 
         $sortDirection = ($filters['sort'] ?? 'az') === 'za' ? 'desc' : 'asc';
         $products = $query->orderBy('name', $sortDirection)->get();
-        $categories = Category::where('category_type', 'jenis')->orderBy('name')->get();
-        $brands = Category::where('category_type', 'merek')->orderBy('name')->get();
 
-        return view('pages.products.index', compact('products', 'categories', 'brands', 'filters'));
+        return view('pages.products.index', compact('products', 'filters'));
     }
 
     /**
@@ -86,15 +96,16 @@ class ProductController extends Controller
             ],
             'name' => 'required|string|max:255',
             'sku' => 'nullable|string|max:255',
-            'purchase_price' => 'required|integer|min:0',
-            'margin_percent' => 'required|integer|min:0',
+            'purchase_price' => 'required|integer|min:0|max:2147483647',
+            'selling_price' => 'required_without:margin_percent|integer|min:0|max:2147483647',
+            'margin_percent' => 'nullable|integer|min:0|max:2147483647',
             'stock' => 'required|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Validasi gambar
         ]);
 
-        // 2. Perhitungan Harga Jual (Backend)
-        $keuntungan = $request->purchase_price * ($request->margin_percent / 100);
-        $harga_jual = $request->purchase_price + $keuntungan;
+        $purchasePrice = (int) $request->input('purchase_price');
+        $sellingPrice = $this->resolveSellingPrice($request, $purchasePrice);
+        $marginPercent = $this->calculateMarginPercent($purchasePrice, $sellingPrice);
 
         // 3. Susun data yang akan disimpan
         $data = [
@@ -102,9 +113,9 @@ class ProductController extends Controller
             'brand_id' => $request->input('brand_id') ?: null,
             'name' => $request->name,
             'sku' => $request->sku,
-            'purchase_price' => $request->purchase_price,
-            'margin_percent' => $request->margin_percent,
-            'selling_price' => $harga_jual,
+            'purchase_price' => $request->input('purchase_price'),
+            'margin_percent' => $marginPercent,
+            'selling_price' => $sellingPrice,
             'stock' => $request->stock,
         ];
 
@@ -160,15 +171,16 @@ class ProductController extends Controller
             ],
             'name' => 'required|string|max:255',
             'sku' => 'nullable|string|max:255',
-            'purchase_price' => 'required|integer|min:0',
-            'margin_percent' => 'required|integer|min:0',
+            'purchase_price' => 'required|integer|min:0|max:2147483647',
+            'selling_price' => 'required_without:margin_percent|integer|min:0|max:2147483647',
+            'margin_percent' => 'nullable|integer|min:0|max:2147483647',
             'stock' => 'required|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Validasi gambar
         ]);
 
-        // 2. Hitung ulang harga jual
-        $keuntungan = $request->purchase_price * ($request->margin_percent / 100);
-        $harga_jual = $request->purchase_price + $keuntungan;
+        $purchasePrice = (int) $request->input('purchase_price');
+        $sellingPrice = $this->resolveSellingPrice($request, $purchasePrice);
+        $marginPercent = $this->calculateMarginPercent($purchasePrice, $sellingPrice);
 
         // 3. Susun data yang akan di-update
         $data = [
@@ -176,9 +188,9 @@ class ProductController extends Controller
             'brand_id' => $request->input('brand_id') ?: null,
             'name' => $request->name,
             'sku' => $request->sku,
-            'purchase_price' => $request->purchase_price,
-            'margin_percent' => $request->margin_percent,
-            'selling_price' => $harga_jual,
+            'purchase_price' => $request->input('purchase_price'),
+            'margin_percent' => $marginPercent,
+            'selling_price' => $sellingPrice,
             'stock' => $request->stock,
         ];
 
@@ -201,5 +213,40 @@ class ProductController extends Controller
         $product->delete();
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus!');
+    }
+
+    private function calculateMarginPercent(int $purchasePrice, int $sellingPrice): int
+    {
+        if ($purchasePrice === 0) {
+            return 0;
+        }
+
+        $marginPercent = (int) round((($sellingPrice - $purchasePrice) / $purchasePrice) * 100);
+
+        if ($marginPercent > 2147483647) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'selling_price' => 'Harga jual terlalu tinggi untuk menghitung margin produk.',
+            ]);
+        }
+
+        return $marginPercent;
+    }
+
+    private function resolveSellingPrice(Request $request, int $purchasePrice): int
+    {
+        if ($request->filled('selling_price')) {
+            return (int) $request->input('selling_price');
+        }
+
+        $marginPercent = (int) $request->input('margin_percent');
+        $sellingPrice = (int) ($purchasePrice + ($purchasePrice * $marginPercent / 100));
+
+        if ($sellingPrice > 2147483647) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'selling_price' => 'Harga jual hasil margin melebihi batas nominal produk.',
+            ]);
+        }
+
+        return $sellingPrice;
     }
 }

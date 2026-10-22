@@ -20,6 +20,8 @@
     .catalog-add { border-radius: 999px; background: var(--primary-color); color: #fff; }
     .catalog-add:hover { color: #fff; background: var(--primary-hover); }
     .cart-controls .form-control { min-width: 0; }
+    .input-group > .input-group-text { border-radius: 1rem 0 0 1rem; }
+    .input-group > .custom-input { border-radius: 0 1rem 1rem 0; }
 </style>
 
 <div class="container-fluid py-4 px-lg-4">
@@ -47,7 +49,7 @@
     @endif
 
     <div class="row g-4">
-        <div class="col-12 col-lg-7 col-xl-8">
+        <div class="col-12 col-lg-8 col-xl-9">
             <div class="pos-panel h-100 d-flex flex-column" style="min-height: 80vh;">
                 <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                     <div>
@@ -102,7 +104,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-lg-5 col-xl-4">
+        <div class="col-12 col-lg-4 col-xl-3">
             <div class="cart-wrapper p-4 h-100" style="min-height: 80vh;">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="font-serif fw-bold text-dark mb-0">Keranjang</h4>
@@ -130,8 +132,11 @@
 
                         <div class="mb-3">
                             <label for="order_discount_input" class="fw-bold text-muted small mb-2">Diskon seluruh transaksi (Rp)</label>
-                            <input type="number" class="form-control custom-input" name="discount_amount" id="order_discount_input" value="0" min="0" step="1" placeholder="0">
-                            <div class="form-text">Dibatasi maksimal sebesar subtotal keranjang.</div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white">Rp</span>
+                                <input type="text" inputmode="numeric" autocomplete="off" class="form-control custom-input" name="discount_amount" id="order_discount_input" value="0" placeholder="0" aria-describedby="order_discount_preview">
+                            </div>
+                            <div class="form-text" id="order_discount_preview">Maksimal sebesar subtotal keranjang.</div>
                         </div>
                         
                         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -141,7 +146,11 @@
                         
                         <div class="mb-3">
                             <label class="fw-bold text-muted small mb-2">Uang Diterima (Rp)</label>
-                            <input type="number" class="form-control custom-input fs-5 fw-bold" name="pay_amount" id="pay_amount" required min="0" placeholder="0">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white fs-5 fw-bold">Rp</span>
+                                <input type="text" inputmode="numeric" autocomplete="off" class="form-control custom-input fs-5 fw-bold" name="pay_amount" id="pay_amount" required placeholder="0" aria-describedby="pay_amount_preview">
+                            </div>
+                            <div class="form-text" id="pay_amount_preview">Masukkan nominal rupiah.</div>
                         </div>
                         
                         <div class="d-flex justify-content-between align-items-center mb-4 px-3 py-3 rounded-4" style="background: var(--bg-cream); border: 1px solid var(--border-color);">
@@ -178,6 +187,8 @@
     const productDiscountDisplay = document.getElementById('product_discount_display');
     const subtotalDisplay = document.getElementById('subtotal_display');
     const payAmountInput = document.getElementById('pay_amount');
+    const orderDiscountPreview = document.getElementById('order_discount_preview');
+    const payAmountPreview = document.getElementById('pay_amount_preview');
     const kembalianDisplay = document.getElementById('kembalian_display');
     const btnBayar = document.getElementById('btn_bayar');
     const cartDataInput = document.getElementById('cart_data_input');
@@ -191,6 +202,8 @@
 
     const productCollator = new Intl.Collator('id', { sensitivity: 'base', numeric: true });
     const money = value => Number(value || 0).toLocaleString('id-ID');
+    const amount = input => Number.parseInt(String(input.value || '').replace(/\D/g, ''), 10) || 0;
+    const normalizeAmountInput = input => { input.value = String(input.value || '').replace(/\D/g, ''); };
 
     function renderProducts() {
         const selectedCategory = categoryFilter.value;
@@ -219,7 +232,7 @@
 
         filteredProducts.forEach(product => {
             const card = document.createElement('div');
-            card.className = 'col-6 col-md-4 col-xl-3';
+            card.className = 'col-6 col-md-4 col-xl-3 col-xxl-2';
             const imagePath = product.image ? '/storage/' + product.image : 'https://placehold.co/400x400/fdfbf7/c78b7d?text=No+Image';
             const productName = escapeHtml(product.name);
             const categoryName = escapeHtml(product.category?.name || 'Jenis belum diatur');
@@ -268,7 +281,7 @@
         const grossSubtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
         const productDiscount = cart.reduce((sum, item) => sum + item.discount, 0);
         const subtotal = grossSubtotal - productDiscount;
-        const requestedOrderDiscount = Math.max(0, Number.parseInt(orderDiscountInput.value, 10) || 0);
+        const requestedOrderDiscount = Math.max(0, amount(orderDiscountInput));
         const orderDiscount = Math.min(requestedOrderDiscount, subtotal);
 
         return { grossSubtotal, productDiscount, subtotal, orderDiscount, total: subtotal - orderDiscount };
@@ -307,8 +320,11 @@
                         </div>
                         <div class="col-7">
                             <label class="form-label small text-muted mb-1">Diskon produk (Rp/baris)</label>
-                            <input type="number" class="form-control form-control-sm" data-cart-action="discount" min="0" max="${item.price * item.qty}" step="1" value="${item.discount}" aria-label="Diskon untuk ${escapeHtml(item.name)}">
-                            <small class="text-muted">Nilai baris Rp ${money(lineSubtotal)}</small>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white">Rp</span>
+                                <input type="text" inputmode="numeric" autocomplete="off" class="form-control" data-cart-action="discount" value="${item.discount}" aria-label="Diskon untuk ${escapeHtml(item.name)}">
+                            </div>
+                            <small class="text-muted" data-discount-summary>Diskon Rp ${money(item.discount)} · Nilai baris Rp ${money(lineSubtotal)}</small>
                         </div>
                     </div>
                 </div>`;
@@ -318,13 +334,15 @@
 
     function updateTotals(clampOrderDiscount = false) {
         const totals = getTotals();
-        if (clampOrderDiscount) orderDiscountInput.value = String(totals.orderDiscount);
-        orderDiscountInput.max = String(totals.subtotal);
+        if (clampOrderDiscount && amount(orderDiscountInput) !== totals.orderDiscount) {
+            orderDiscountInput.value = String(totals.orderDiscount);
+        }
         grossSubtotalDisplay.textContent = 'Rp ' + money(totals.grossSubtotal);
         productDiscountDisplay.textContent = '−Rp ' + money(totals.productDiscount);
         subtotalDisplay.textContent = 'Rp ' + money(totals.subtotal);
         totalAmountInput.value = String(totals.total);
         totalDisplay.textContent = 'Rp ' + money(totals.total);
+        orderDiscountPreview.textContent = `Diskon saat ini Rp ${money(totals.orderDiscount)}. Maksimal Rp ${money(totals.subtotal)}.`;
         cartDataInput.value = JSON.stringify(cart.map(item => ({ id: item.id, qty: item.qty, discount: item.discount })));
         itemCount.textContent = String(cart.reduce((sum, item) => sum + item.qty, 0));
         calculateKembalian();
@@ -338,12 +356,13 @@
 
     function calculateKembalian() {
         const total = Number.parseInt(totalAmountInput.value, 10) || 0;
-        const paid = Number.parseInt(payAmountInput.value, 10) || 0;
+        const paid = amount(payAmountInput);
         const change = paid - total;
-        const paymentIsValid = payAmountInput.value !== '' && change >= 0 && cart.length > 0;
+        const paymentIsValid = payAmountInput.value.trim() !== '' && change >= 0 && cart.length > 0;
 
         kembalianDisplay.textContent = paymentIsValid ? 'Rp ' + money(change) : 'Uang Kurang';
         kembalianDisplay.style.color = paymentIsValid ? 'var(--text-dark)' : 'red';
+        payAmountPreview.textContent = `Nominal diterima: Rp ${money(paid)}.`;
         btnBayar.disabled = !paymentIsValid;
     }
 
@@ -391,35 +410,51 @@
         updateCartUI();
     });
 
-    cartBody.addEventListener('change', event => {
-        const input = event.target.closest('[data-cart-action="quantity"], [data-cart-action="discount"]');
+    cartBody.addEventListener('input', event => {
+        const input = event.target.closest('[data-cart-action="discount"]');
         if (!input) return;
         const line = input.closest('[data-cart-index]');
         const item = line ? cart[Number(line.dataset.cartIndex)] : null;
         if (!item) return;
 
-        if (input.dataset.cartAction === 'quantity') {
-            item.qty = Math.max(1, Math.min(item.stock, Number.parseInt(input.value, 10) || 1));
-            item.discount = Math.min(item.discount, item.price * item.qty);
-        } else {
-            item.discount = Math.max(0, Math.min(item.price * item.qty, Number.parseInt(input.value, 10) || 0));
-        }
+        normalizeAmountInput(input);
+        item.discount = Math.max(0, Math.min(item.price * item.qty, amount(input)));
+        input.value = String(item.discount);
+        line.querySelector('[data-discount-summary]').textContent = `Diskon Rp ${money(item.discount)} · Nilai baris Rp ${money(item.price * item.qty - item.discount)}`;
+        updateTotals(false);
+    });
+
+    cartBody.addEventListener('change', event => {
+        const input = event.target.closest('[data-cart-action="quantity"]');
+        if (!input) return;
+        const line = input.closest('[data-cart-index]');
+        const item = line ? cart[Number(line.dataset.cartIndex)] : null;
+        if (!item) return;
+
+        item.qty = Math.max(1, Math.min(item.stock, Number.parseInt(input.value, 10) || 1));
+        item.discount = Math.min(item.discount, item.price * item.qty);
         updateCartUI();
     });
 
-    orderDiscountInput.addEventListener('input', () => updateTotals(false));
+    orderDiscountInput.addEventListener('input', () => {
+        normalizeAmountInput(orderDiscountInput);
+        updateTotals(false);
+    });
     orderDiscountInput.addEventListener('change', () => updateTotals(true));
-    payAmountInput.addEventListener('input', calculateKembalian);
+    payAmountInput.addEventListener('input', () => {
+        normalizeAmountInput(payAmountInput);
+        calculateKembalian();
+    });
 
     document.getElementById('form_transaksi').addEventListener('submit', function (event) {
         event.preventDefault();
         const totals = updateTotals(true);
-        if (!payAmountInput.reportValidity() || Number.parseInt(payAmountInput.value, 10) < totals.total) {
+        if (!payAmountInput.reportValidity() || amount(payAmountInput) < totals.total) {
             calculateKembalian();
             return;
         }
 
-        const paid = Number.parseInt(payAmountInput.value, 10) || 0;
+        const paid = amount(payAmountInput);
         const change = paid - totals.total;
         Swal.fire({
             title: 'Proses Pembayaran?',
@@ -432,7 +467,11 @@
             cancelButtonText: '<span style="color:var(--text-dark)">Batal</span>',
             customClass: { confirmButton: 'rounded-pill px-4', cancelButton: 'rounded-pill px-4' }
         }).then(result => {
-            if (result.isConfirmed) this.submit();
+            if (result.isConfirmed) {
+                orderDiscountInput.value = String(amount(orderDiscountInput));
+                payAmountInput.value = String(amount(payAmountInput));
+                this.submit();
+            }
         });
     });
 </script>

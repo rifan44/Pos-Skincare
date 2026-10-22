@@ -21,7 +21,7 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="fw-bold small text-muted mb-1">Nama Produk Skincare</label>
-                    <input type="text" name="name" class="form-control bg-light" value="{{ $product->name }}" required>
+                    <input type="text" name="name" class="form-control bg-light" value="{{ old('name', $product->name) }}" required>
                 </div>
                 
                 <div class="col-md-6">
@@ -49,22 +49,39 @@
                 
                 <div class="col-md-6">
                     <label class="fw-bold small text-muted mb-1">SKU / Barcode (Opsional)</label>
-                    <input type="text" name="sku" class="form-control bg-light" value="{{ $product->sku }}">
+                    <input type="text" name="sku" class="form-control bg-light" value="{{ old('sku', $product->sku) }}">
                 </div>
                 
                 <div class="col-md-6">
                     <label class="fw-bold small text-muted mb-1">Stok Tersedia</label>
-                    <input type="number" name="stock" class="form-control bg-light" value="{{ $product->stock }}" required min="0">
+                    <input type="number" name="stock" class="form-control bg-light" value="{{ old('stock', $product->stock) }}" required min="0">
+                    @error('stock')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                 </div>
                 
                 <div class="col-md-6">
                     <label class="fw-bold small text-muted mb-1">Harga Beli / Modal (Rp)</label>
-                    <input type="number" name="purchase_price" class="form-control bg-light" value="{{ $product->purchase_price }}" required min="0">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">Rp</span>
+                        <input type="text" inputmode="numeric" autocomplete="off" name="purchase_price" data-money-input class="form-control bg-light @error('purchase_price') is-invalid @enderror" value="{{ old('purchase_price', $product->purchase_price) }}" required aria-describedby="purchase_price_preview">
+                    </div>
+                    <small id="purchase_price_preview" class="form-text text-muted" data-money-preview>Rp 0</small>
+                    @error('purchase_price')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                 </div>
                 
                 <div class="col-md-6">
-                    <label class="fw-bold small text-muted mb-1">Margin Keuntungan (%)</label>
-                    <input type="number" name="margin_percent" class="form-control bg-light" value="{{ $product->margin_percent }}" required min="0">
+                    <label class="fw-bold small text-muted mb-1">Harga Jual (Rp)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">Rp</span>
+                        <input type="text" inputmode="numeric" autocomplete="off" name="selling_price" data-money-input class="form-control bg-light @error('selling_price') is-invalid @enderror" value="{{ old('selling_price', $product->selling_price) }}" required aria-describedby="selling_price_preview">
+                    </div>
+                    <small id="selling_price_preview" class="form-text text-muted" data-money-preview>Rp 0</small>
+                    @error('selling_price')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-md-6">
+                    <label class="fw-bold small text-muted mb-1">Margin Keuntungan</label>
+                    <div class="form-control-plaintext fw-bold text-success" data-margin-preview>{{ $product->margin_percent }}%</div>
+                    <small class="form-text text-muted">Margin dihitung otomatis dari HPP dan harga jual.</small>
                 </div>
                 
                 <!-- INPUT GAMBAR DAN PREVIEW -->
@@ -103,4 +120,48 @@
         </form>
     </div>
 </div>
+<script>
+    (() => {
+        const moneyInputs = [...document.querySelectorAll('[data-money-input]')];
+        const purchaseInput = document.querySelector('[name="purchase_price"]');
+        const sellingInput = document.querySelector('[name="selling_price"]');
+        const marginPreview = document.querySelector('[data-margin-preview]');
+        const digits = value => String(value || '').replace(/\D/g, '');
+        const rupiah = value => (Number(value) || 0).toLocaleString('id-ID');
+
+        function updatePricePreviews() {
+            moneyInputs.forEach(input => {
+                const preview = document.getElementById(input.getAttribute('aria-describedby'));
+                if (preview) preview.textContent = 'Rp ' + rupiah(digits(input.value));
+            });
+
+            const purchase = Number(digits(purchaseInput.value)) || 0;
+            const selling = Number(digits(sellingInput.value)) || 0;
+            const rawMargin = purchase > 0 ? ((selling - purchase) / purchase) * 100 : 0;
+            const margin = Math.sign(rawMargin) * Math.round(Math.abs(rawMargin));
+            marginPreview.textContent = margin + '%';
+        }
+
+        moneyInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                input.value = digits(input.value);
+                updatePricePreviews();
+            });
+            input.addEventListener('focus', () => { input.value = digits(input.value); });
+            input.addEventListener('blur', () => {
+                const value = digits(input.value);
+                input.value = value ? rupiah(value) : '';
+                updatePricePreviews();
+            });
+        });
+
+        document.querySelector('form').addEventListener('submit', () => {
+            moneyInputs.forEach(input => { input.value = digits(input.value); });
+        });
+        moneyInputs.forEach(input => {
+            if (input.value) input.value = rupiah(digits(input.value));
+        });
+        updatePricePreviews();
+    })();
+</script>
 @endsection
