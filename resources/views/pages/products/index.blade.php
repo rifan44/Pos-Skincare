@@ -8,7 +8,7 @@
     <div class="row align-items-end mb-4">
         <div class="col-sm-8">
             <h3 class="font-serif fw-bold text-dark mb-1">Data Produk Skincare</h3>
-            <p class="text-muted mb-0" style="font-size: 0.95rem;">Kelola harga jual, stok tersedia, dan detail produk toko.</p>
+            <p class="text-muted mb-0" style="font-size: 0.95rem;">Kelola produk, jenis skincare, merek, harga jual, dan stok tersedia.</p>
         </div>
         <div class="col-sm-4 text-sm-end mt-3 mt-sm-0">
             <a href="{{ route('products.create') }}" class="btn btn-dark rounded-pill px-4 shadow-sm">
@@ -24,6 +24,37 @@
     </div>
     @endif
 
+    <form action="{{ route('products.index') }}" method="GET" class="card border-0 shadow-sm rounded-4 p-3 p-lg-4 mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label for="search" class="form-label small fw-bold text-muted">Cari Produk</label>
+                <input type="search" id="search" name="search" class="form-control bg-light" value="{{ request('search') }}" placeholder="Nama produk atau SKU">
+            </div>
+            <div class="col-md-5 col-lg-3">
+                <label for="category_id" class="form-label small fw-bold text-muted">Jenis Skincare</label>
+                <select id="category_id" name="category_id" class="form-select bg-light">
+                    <option value="">Semua jenis</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" @selected(request('category_id') == $category->id)>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-5 col-lg-3">
+                <label for="brand_id" class="form-label small fw-bold text-muted">Merek</label>
+                <select id="brand_id" name="brand_id" class="form-select bg-light">
+                    <option value="">Semua merek</option>
+                    @foreach($brands as $brand)
+                        <option value="{{ $brand->id }}" @selected(request('brand_id') == $brand->id)>{{ $brand->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2 col-lg-2 d-flex gap-2">
+                <button type="submit" class="btn btn-dark rounded-pill flex-grow-1">Filter</button>
+                <a href="{{ route('products.index') }}" class="btn btn-light border rounded-pill">Reset</a>
+            </div>
+        </div>
+    </form>
+
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -31,7 +62,8 @@
                     <tr>
                         <th width="5%" class="px-4 py-3 text-center">No</th>
                         <th width="8%" class="px-4 py-3 text-center">Foto</th>
-                        <th width="15%" class="px-4 py-3 text-start">Kategori</th>
+                        <th width="14%" class="px-4 py-3 text-start">Jenis</th>
+                        <th width="14%" class="px-4 py-3 text-start">Merek</th>
                         <th class="px-4 py-3 text-start">Nama Produk</th>
                         <th width="12%" class="px-4 py-3 text-start">HPP</th>
                         <th width="12%" class="px-4 py-3 text-start">Harga Jual</th>
@@ -53,6 +85,7 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 text-start"><span class="badge bg-light text-dark border px-2 py-1">{{ $product->category->name ?? '-' }}</span></td>
+                        <td class="px-4 py-3 text-start"><span class="badge text-white px-2 py-1" style="background-color: var(--primary-color);">{{ $product->brand->name ?? '-' }}</span></td>
                         <td class="px-4 py-3 fw-bold text-dark">{{ $product->name }}</td>
                         <td class="px-4 py-3 text-muted text-start">Rp {{ number_format($product->purchase_price, 0, ',', '.') }}</td>
                         <td class="px-4 py-3 fw-bold text-success text-start">Rp {{ number_format($product->selling_price, 0, ',', '.') }}</td>
@@ -74,7 +107,9 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-5 fw-medium">Belum ada produk terdaftar.</td>
+                        <td colspan="9" class="text-center text-muted py-5 fw-medium">
+                            {{ request()->hasAny(['search', 'category_id', 'brand_id']) ? 'Tidak ada produk yang cocok dengan filter.' : 'Belum ada produk terdaftar.' }}
+                        </td>
                     </tr>
                     @endforelse
                 </tbody>

@@ -7,8 +7,6 @@
     .pos-panel { background: transparent; }
     .custom-input { border-radius: 1rem; border: 1px solid var(--border-color); padding: 0.8rem 1.2rem; background: #fff; transition: all 0.3s ease; }
     .custom-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(199, 139, 125, 0.15); }
-    .category-pill { border-radius: 50rem; padding: 0.5rem 1.2rem; font-weight: 500; font-size: 0.85rem; border: 1px solid var(--border-color); background: #fff; color: var(--text-muted); transition: all 0.2s; }
-    .category-pill.active { background-color: var(--primary-color); border-color: var(--primary-color); color: #fff; }
     .cart-wrapper { border-radius: 1.5rem; background: #fff; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(59,51,49,0.04); display: flex; flex-direction: column; }
     .btn-pay { border-radius: 1rem; background: var(--primary-color); color: #fff; font-weight: 700; border: none; padding: 1rem; transition: all 0.3s; }
     .btn-pay:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-2px); }
@@ -55,11 +53,25 @@
                     </div>
                 </div>
 
-                <div class="d-flex gap-2 overflow-auto hide-scroll mb-4 pb-2" id="category_filters">
-                    <button class="category-pill active" data-category="all">Semua Koleksi</button>
-                    @foreach(\App\Models\Category::all() as $cat)
-                        <button class="category-pill" data-category="{{ $cat->id }}">{{ $cat->name }}</button>
-                    @endforeach
+                <div class="row g-2 mb-4">
+                    <div class="col-md-6">
+                        <label for="category_filter" class="form-label small fw-bold text-muted mb-1">Jenis Skincare</label>
+                        <select id="category_filter" class="form-select custom-input">
+                            <option value="">Semua jenis</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="brand_filter" class="form-label small fw-bold text-muted mb-1">Merek</label>
+                        <select id="brand_filter" class="form-select custom-input">
+                            <option value="">Semua merek</option>
+                            @foreach($brands as $brand)
+                                <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <div class="row g-3 flex-grow-1 overflow-auto hide-scroll pb-4" id="product_grid" style="max-height: 60vh;">
@@ -119,7 +131,8 @@
 
     const barcodeInput = document.getElementById('barcode_input');
     const searchManual = document.getElementById('search_manual');
-    const filterBtns = document.querySelectorAll('.category-pill');
+    const categoryFilter = document.getElementById('category_filter');
+    const brandFilter = document.getElementById('brand_filter');
     const productGrid = document.getElementById('product_grid');
     const cartBody = document.getElementById('cart_body');
     const emptyMsg = document.getElementById('empty_cart_msg');
@@ -131,12 +144,31 @@
     const cartDataInput = document.getElementById('cart_data_input');
     const itemCount = document.getElementById('item_count');
 
-    function renderProducts(filterCategory = 'all', searchQuery = '') {
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, character => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        })[character]);
+    }
+
+    function renderProducts() {
         productGrid.innerHTML = ''; 
+        const selectedCategory = categoryFilter.value;
+        const selectedBrand = brandFilter.value;
+        const searchQuery = searchManual.value.trim().toLowerCase();
+
         let filteredProducts = products.filter(p => {
-            let matchCategory = (filterCategory === 'all') || (p.category_id == filterCategory);
-            let matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-            return matchCategory && matchSearch;
+            const matchCategory = !selectedCategory || String(p.category_id) === selectedCategory;
+            const matchBrand = !selectedBrand || String(p.brand_id ?? '') === selectedBrand;
+            const searchableFields = [p.name, p.sku, p.category?.name, p.brand?.name];
+            const matchSearch = !searchQuery || searchableFields.some(value =>
+                String(value ?? '').toLowerCase().includes(searchQuery)
+            );
+
+            return matchCategory && matchBrand && matchSearch;
         });
 
         if(filteredProducts.length === 0) {
@@ -148,6 +180,9 @@
             let card = document.createElement('div');
             card.className = 'col-6 col-md-4 col-xl-3 mb-3';
             let imagePath = p.image ? '/storage/' + p.image : 'https://placehold.co/400x400/fdfbf7/c78b7d?text=No+Image';
+            const productName = escapeHtml(p.name);
+            const categoryName = escapeHtml(p.category?.name || 'Jenis belum diatur');
+            const brandName = p.brand?.name ? escapeHtml(p.brand.name) : '';
             
             card.innerHTML = `
                 <div class="card border-0 shadow-sm p-2 d-flex flex-column bg-white h-100" 
@@ -157,15 +192,19 @@
                      onclick="addToCartManual(${p.id})">
                     
                     <div class="position-relative w-100 mb-2" style="height: 120px; border-radius: 1rem; overflow: hidden; background: var(--bg-cream);">
-                        <img src="${imagePath}" class="w-100 h-100" style="object-fit: cover;" alt="${p.name}">
+                        <img src="${escapeHtml(imagePath)}" class="w-100 h-100" style="object-fit: cover;" alt="${productName}">
                         <span class="badge position-absolute top-0 start-0 m-2 shadow-sm" style="background-color: var(--primary-color); font-size: 0.7rem; font-weight: 500;">
                             Stok: ${p.stock}
                         </span>
                     </div>
                     
                     <div class="px-2 d-flex flex-column flex-grow-1 pb-1">
-                        <h6 class="font-serif fw-bold text-dark mt-1 mb-1 text-truncate" style="font-size: 1rem;" title="${p.name}">
-                            ${p.name}
+                        <div class="d-flex flex-wrap gap-1 mb-1">
+                            <span class="badge bg-light text-dark border">${categoryName}</span>
+                            ${brandName ? `<span class="badge text-white" style="background-color: var(--primary-color);">${brandName}</span>` : ''}
+                        </div>
+                        <h6 class="font-serif fw-bold text-dark mt-1 mb-1 text-truncate" style="font-size: 1rem;" title="${productName}">
+                            ${productName}
                         </h6>
                         <div class="mt-auto">
                             <h6 class="fw-bold mb-0" style="color: var(--text-muted); font-size: 0.95rem;">
@@ -180,17 +219,9 @@
     }
     renderProducts();
 
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            renderProducts(this.getAttribute('data-category'), searchManual.value);
-        });
-    });
-    searchManual.addEventListener('input', function() {
-        let activeCategory = document.querySelector('.category-pill.active').getAttribute('data-category');
-        renderProducts(activeCategory, this.value);
-    });
+    categoryFilter.addEventListener('change', renderProducts);
+    brandFilter.addEventListener('change', renderProducts);
+    searchManual.addEventListener('input', renderProducts);
     barcodeInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault(); 

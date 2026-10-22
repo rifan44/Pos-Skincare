@@ -66,6 +66,60 @@
         max-height: 500px;
         object-fit: contain;
     }
+    .about-panel {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        background: linear-gradient(135deg, #fff 0%, #f8efec 100%);
+        box-shadow: 0 1rem 3rem rgba(59, 51, 49, 0.07);
+    }
+    .about-panel::before {
+        content: '';
+        position: absolute;
+        z-index: 0;
+        top: -8rem;
+        right: -5rem;
+        width: 22rem;
+        height: 22rem;
+        border-radius: 50%;
+        background: rgba(199, 139, 125, 0.12);
+        pointer-events: none;
+    }
+    .about-panel > .row {
+        position: relative;
+        z-index: 1;
+    }
+    .about-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.55rem 0.9rem;
+        border-radius: 50rem;
+        background: #f4e7e3;
+        color: var(--primary-color);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+    .about-highlight {
+        height: 100%;
+        padding: 1rem;
+        border: 1px solid rgba(199, 139, 125, 0.18);
+        border-radius: 1.1rem;
+        background: rgba(255, 255, 255, 0.86);
+    }
+    .about-highlight-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.65rem;
+        height: 2.65rem;
+        border-radius: 0.9rem;
+        background: #f7eeeb;
+        color: var(--primary-color);
+    }
     .btn-hero {
         background-color: var(--primary-color);
         color: #fff;
@@ -213,23 +267,48 @@
 
 <!-- SECTION 2: TENTANG KAMI -->
 <div class="container px-4 px-lg-5 mb-5 pb-5" id="about">
-    <div class="row justify-content-center">
-        <div class="col-lg-9 col-xl-8 text-center">
-            <h2 class="font-serif fw-bold text-dark mb-4">Mendukung Pertumbuhan Bisnis Kecantikan Anda</h2>
-            <p class="text-muted mb-4" style="font-size: 1.1rem; line-height: 1.8;">
-                <strong>{{ $appSetting->store_name ?? 'Skincare POS' }}</strong> membantu toko skincare mencatat penjualan dan mengelola stok produk dalam satu alur kerja.
-            </p>
-            <p class="text-muted mb-4" style="font-size: 1.1rem; line-height: 1.8;">
-                Data transaksi menyimpan harga dan HPP saat penjualan dibuat, sehingga ringkasan penjualan dapat ditelusuri kembali dari riwayat transaksi.
-            </p>
-            <div class="d-flex justify-content-center gap-4 mt-4">
-                <div class="text-center">
-                    <h3 class="font-serif fw-bold mb-0" style="color: var(--primary-color);"><i class="fas fa-cash-register" aria-hidden="true"></i></h3>
-                    <span class="small fw-bold text-muted text-uppercase">Kasir</span>
-                </div>
-                <div class="text-center">
-                    <h3 class="font-serif fw-bold mb-0" style="color: var(--primary-color);"><i class="fas fa-boxes-stacked" aria-hidden="true"></i></h3>
-                    <span class="small fw-bold text-muted text-uppercase">Stok</span>
+    <div class="about-panel rounded-5 p-4 p-lg-5">
+        <div class="row align-items-center g-4 g-lg-5">
+            <div class="col-lg-7">
+                <span class="about-eyebrow"><i class="fas fa-spa" aria-hidden="true"></i>Tentang {{ $appSetting->store_name ?? 'Skincare POS' }}</span>
+                <h2 class="font-serif fw-bold text-dark mt-4 mb-3">Mendukung Pertumbuhan Bisnis Kecantikan Anda</h2>
+                <p class="text-muted mb-3" style="font-size: 1.05rem; line-height: 1.8;">
+                    <strong>{{ $appSetting->store_name ?? 'Skincare POS' }}</strong> membantu toko skincare mencatat penjualan dan mengelola stok produk dalam satu alur kerja.
+                </p>
+                <p class="text-muted mb-0" style="line-height: 1.8;">
+                    Informasi jenis dan merek produk tersusun bersama transaksi, sehingga kasir lebih mudah menemukan barang dan admin dapat meninjau aktivitas toko.
+                </p>
+            </div>
+            <div class="col-lg-5">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="about-highlight">
+                            <span class="about-highlight-icon mb-3"><i class="fas fa-tags" aria-hidden="true"></i></span>
+                            <h6 class="fw-bold text-dark mb-1">Jenis & Merek</h6>
+                            <p class="small text-muted mb-0">Temukan produk lewat kelompok yang sesuai.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="about-highlight">
+                            <span class="about-highlight-icon mb-3"><i class="fas fa-cash-register" aria-hidden="true"></i></span>
+                            <h6 class="fw-bold text-dark mb-1">Kasir Praktis</h6>
+                            <p class="small text-muted mb-0">Catat transaksi dari satu halaman.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="about-highlight">
+                            <span class="about-highlight-icon mb-3"><i class="fas fa-boxes-stacked" aria-hidden="true"></i></span>
+                            <h6 class="fw-bold text-dark mb-1">Stok Terpantau</h6>
+                            <p class="small text-muted mb-0">Perubahan stok mengikuti checkout berhasil.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="about-highlight">
+                            <span class="about-highlight-icon mb-3"><i class="fas fa-chart-pie" aria-hidden="true"></i></span>
+                            <h6 class="fw-bold text-dark mb-1">Laporan Toko</h6>
+                            <p class="small text-muted mb-0">Bantu admin meninjau penjualan toko.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

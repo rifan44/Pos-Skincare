@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
@@ -16,11 +17,14 @@ class TransactionController extends Controller
     // Menampilkan halaman antarmuka kasir
     public function index()
     {
-        // Ambil produk dan kategori
-        $products = Product::where('stock', '>', 0)->get();
-        $categories = \App\Models\Category::all(); 
-        
-        return view('pages.pos.index', compact('products', 'categories'));
+        $products = Product::with(['category', 'brand'])
+            ->where('stock', '>', 0)
+            ->orderBy('name')
+            ->get();
+        $categories = Category::where('category_type', 'jenis')->orderBy('name')->get();
+        $brands = Category::where('category_type', 'merek')->orderBy('name')->get();
+
+        return view('pages.pos.index', compact('products', 'categories', 'brands'));
     }
 
     // Memproses transaksi dari kasir

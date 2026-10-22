@@ -24,13 +24,25 @@
                 </div>
                 
                 <div class="col-md-6">
-                    <label class="fw-bold small text-muted mb-1">Kategori Produk</label>
-                    <select name="category_id" class="form-select bg-light" required>
+                    <label class="fw-bold small text-muted mb-1">Jenis Skincare</label>
+                    <select name="category_id" class="form-select bg-light @error('category_id') is-invalid @enderror" required>
                         <option value="">-- Pilih Kategori --</option>
                         @foreach($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
                         @endforeach
                     </select>
+                    @error('category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-md-6">
+                    <label class="fw-bold small text-muted mb-1">Merek Skincare (Opsional)</label>
+                    <select name="brand_id" class="form-select bg-light @error('brand_id') is-invalid @enderror">
+                        <option value="">-- Tanpa merek --</option>
+                        @foreach($brands as $brand)
+                            <option value="{{ $brand->id }}" @selected(old('brand_id') == $brand->id)>{{ $brand->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('brand_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 
                 <div class="col-md-6">

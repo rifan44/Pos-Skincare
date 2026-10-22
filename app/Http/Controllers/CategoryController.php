@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
 {
@@ -12,10 +13,11 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        // Mengambil semua data kategori dari tabel database
-        $categories = \App\Models\Category::all();
-        
-        // Memanggil halaman view dan mengirimkan variabel $categories
+        $categories = Category::withCount(['products', 'brandProducts'])
+            ->orderByRaw("case category_type when 'jenis' then 0 else 1 end")
+            ->orderBy('name')
+            ->get();
+
         return view('pages.categories.index', compact('categories'));
     }
 
@@ -23,29 +25,25 @@ class CategoryController extends Controller
      * Show the form for creating a new resource.
      */
     public function create()
- {
-     // Menampilkan halaman form tambah kategori
-     return view('pages.categories.create');
- }
+    {
+        // Menampilkan halaman form tambah kategori
+        return view('pages.categories.create');
+    }
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
- {
-     // 1. Validasi: pastikan nama kategori wajib diisi
-     $request->validate([
-         'name' => 'required|string|max:255'
-     ]);
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'category_type' => 'required|in:jenis,merek',
+        ]);
 
-     // 2. Simpan data ke database
-     Category::create([
-         'name' => $request->name
-     ]);
+        Category::create($data);
 
-     // 3. Kembali ke halaman daftar kategori dengan pesan sukses
-     return redirect()->route('categories.index')->with('success', 'Kategori berhasil ditambahkan!');
- }
+        return redirect()->route('categories.index')->with('success', 'Kategori berhasil ditambahkan!');
+    }
 
     /**
      * Display the specified resource.
@@ -69,15 +67,23 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
-        // Validasi input
-        $request->validate([
-            'name' => 'required|string|max:255'
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'category_type' => 'required|in:jenis,merek',
         ]);
 
-        // Menyimpan perubahan ke database
-        $category->update([
-            'name' => $request->name
-        ]);
+        if ($data['category_type'] !== $category->category_type) {
+            $hasProducts = $category->products()->withTrashed()->exists()
+                || $category->brandProducts()->withTrashed()->exists();
+
+            if ($hasProducts) {
+                throw ValidationException::withMessages([
+                    'category_type' => 'Jenis kategori tidak dapat diubah karena sudah digunakan oleh produk. Pindahkan produk tersebut terlebih dahulu.',
+                ]);
+            }
+        }
+
+        $category->update($data);
 
         return redirect()->route('categories.index')->with('success', 'Kategori berhasil diperbarui!');
     }
@@ -87,7 +93,15 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        // Menghapus data dari database
+        $hasProducts = $category->products()->withTrashed()->exists()
+            || $category->brandProducts()->withTrashed()->exists();
+
+        if ($hasProducts) {
+            return redirect()->route('categories.index')->withErrors([
+                'category' => 'Kategori ini masih digunakan oleh produk dan tidak dapat dihapus.',
+            ]);
+        }
+
         $category->delete();
 
         return redirect()->route('categories.index')->with('success', 'Kategori berhasil dihapus!');
