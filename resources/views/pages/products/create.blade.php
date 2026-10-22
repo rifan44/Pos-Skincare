@@ -14,8 +14,9 @@
 
     <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
         <!-- PASTIKAN ADA ENCTYPE INI AGAR GAMBAR BISA DIKIRIM -->
-        <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data">
+        <form id="product_form" action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
+            <input type="hidden" name="price_source" value="{{ old('price_source', 'selling_price') }}" data-price-source>
             
             <div class="row g-3">
                 <div class="col-md-6">
@@ -60,7 +61,8 @@
                     <label class="fw-bold small text-muted mb-1">Harga Beli / Modal (Rp)</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white">Rp</span>
-                        <input type="text" inputmode="numeric" autocomplete="off" name="purchase_price" data-money-input class="form-control bg-light @error('purchase_price') is-invalid @enderror" value="{{ old('purchase_price') }}" required placeholder="Contoh: 30000" aria-describedby="purchase_price_preview">
+                        <input type="text" inputmode="numeric" autocomplete="off" id="purchase_price_display" data-money-display class="form-control bg-light @error('purchase_price') is-invalid @enderror" value="{{ old('purchase_price') }}" required placeholder="Contoh: 30000" aria-describedby="purchase_price_preview">
+                        <input type="hidden" name="purchase_price" data-money-value value="{{ old('purchase_price') }}">
                     </div>
                     <small id="purchase_price_preview" class="form-text text-muted" data-money-preview>Rp 0</small>
                     @error('purchase_price')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
@@ -70,7 +72,8 @@
                     <label class="fw-bold small text-muted mb-1">Harga Jual (Rp)</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white">Rp</span>
-                        <input type="text" inputmode="numeric" autocomplete="off" name="selling_price" data-money-input class="form-control bg-light @error('selling_price') is-invalid @enderror" value="{{ old('selling_price') }}" required placeholder="Masukkan harga jual" aria-describedby="selling_price_preview">
+                        <input type="text" inputmode="numeric" autocomplete="off" id="selling_price_display" data-money-display class="form-control bg-light @error('selling_price') is-invalid @enderror" value="{{ old('selling_price') }}" required placeholder="Masukkan harga jual" aria-describedby="selling_price_preview">
+                        <input type="hidden" name="selling_price" data-selling-value value="{{ old('selling_price') }}">
                     </div>
                     <small id="selling_price_preview" class="form-text text-muted" data-money-preview>Rp 0</small>
                     @error('selling_price')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
@@ -78,8 +81,13 @@
 
                 <div class="col-md-6">
                     <label class="fw-bold small text-muted mb-1">Margin Keuntungan</label>
-                    <div class="form-control-plaintext fw-bold text-success" data-margin-preview>0%</div>
-                    <small class="form-text text-muted">Margin dihitung otomatis dari HPP dan harga jual.</small>
+                    <div class="input-group">
+                        <input type="text" inputmode="numeric" autocomplete="off" name="margin_percent" data-margin-input class="form-control bg-light @error('margin_percent') is-invalid @enderror" value="{{ old('margin_percent') }}" placeholder="Contoh: 20">
+                        <span class="input-group-text bg-white">%</span>
+                    </div>
+                    <small class="form-text text-muted" data-margin-hint>Isi harga jual atau margin; nilai lainnya akan mengikuti otomatis.</small>
+                    @error('margin_percent')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                </div>
                 </div>
 
                 <!-- INPUT GAMBAR (Memakan lebar penuh / col-12) -->
@@ -101,48 +109,5 @@
         </form>
     </div>
 </div>
-<script>
-    (() => {
-        const moneyInputs = [...document.querySelectorAll('[data-money-input]')];
-        const purchaseInput = document.querySelector('[name="purchase_price"]');
-        const sellingInput = document.querySelector('[name="selling_price"]');
-        const marginPreview = document.querySelector('[data-margin-preview]');
-        const digits = value => String(value || '').replace(/\D/g, '');
-        const rupiah = value => (Number(value) || 0).toLocaleString('id-ID');
-
-        function updatePricePreviews() {
-            moneyInputs.forEach(input => {
-                const preview = document.getElementById(input.getAttribute('aria-describedby'));
-                if (preview) preview.textContent = 'Rp ' + rupiah(digits(input.value));
-            });
-
-            const purchase = Number(digits(purchaseInput.value)) || 0;
-            const selling = Number(digits(sellingInput.value)) || 0;
-            const rawMargin = purchase > 0 ? ((selling - purchase) / purchase) * 100 : 0;
-            const margin = Math.sign(rawMargin) * Math.round(Math.abs(rawMargin));
-            marginPreview.textContent = margin + '%';
-        }
-
-        moneyInputs.forEach(input => {
-            input.addEventListener('input', () => {
-                input.value = digits(input.value);
-                updatePricePreviews();
-            });
-            input.addEventListener('focus', () => { input.value = digits(input.value); });
-            input.addEventListener('blur', () => {
-                const value = digits(input.value);
-                input.value = value ? rupiah(value) : '';
-                updatePricePreviews();
-            });
-        });
-
-        document.querySelector('form').addEventListener('submit', () => {
-            moneyInputs.forEach(input => { input.value = digits(input.value); });
-        });
-        updatePricePreviews();
-        moneyInputs.forEach(input => {
-            if (input.value) input.value = rupiah(digits(input.value));
-        });
-    })();
-</script>
+@include('pages.products.partials.pricing-script')
 @endsection

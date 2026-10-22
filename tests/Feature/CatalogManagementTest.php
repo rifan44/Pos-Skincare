@@ -223,6 +223,47 @@ class CatalogManagementTest extends TestCase
             ->assertSessionHasErrors('brand_id');
     }
 
+    public function test_product_price_and_margin_inputs_stay_in_sync_on_create_and_update(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $category = Category::create(['name' => 'Serum', 'category_type' => 'jenis']);
+
+        $this->actingAs($admin)->post(route('products.store'), [
+            'category_id' => $category->id,
+            'name' => 'Serum Margin',
+            'purchase_price' => '10000',
+            'selling_price' => '12000',
+            'margin_percent' => '20',
+            'price_source' => 'margin_percent',
+            'stock' => 5,
+        ])->assertRedirect(route('products.index'));
+
+        $product = Product::query()->where('name', 'Serum Margin')->firstOrFail();
+        $this->assertSame(12000, (int) $product->selling_price);
+        $this->assertSame(20, (int) $product->margin_percent);
+        $this->actingAs($admin)
+            ->get(route('products.edit', $product))
+            ->assertOk()
+            ->assertSee('id="product_form"', false)
+            ->assertSee('data-margin-input', false);
+
+        $this->actingAs($admin)->put(route('products.update', $product), [
+            'category_id' => $category->id,
+            'name' => 'Serum Harga Manual',
+            'purchase_price' => '10000',
+            'selling_price' => '15000',
+            'margin_percent' => '50',
+            'price_source' => 'selling_price',
+            'stock' => 5,
+        ])->assertRedirect(route('products.index'));
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'selling_price' => 15000,
+            'margin_percent' => 50,
+        ]);
+    }
+
     public function test_cashier_can_filter_pos_catalog_by_type_and_brand(): void
     {
         $cashier = User::factory()->create(['role' => 'kasir']);

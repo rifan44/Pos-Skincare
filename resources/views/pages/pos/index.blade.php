@@ -4,27 +4,42 @@
 
 <style>
     body { background-color: var(--bg-cream); }
-    .pos-panel { background: transparent; }
+    .pos-page { height: calc(100dvh - 100px); min-height: 0; overflow: hidden; }
+    .pos-layout { height: 100%; min-height: 0; }
+    .pos-panel { height: calc(100dvh - 110px) !important; background: transparent; min-height: 0; }
     .custom-input { border-radius: 1rem; border: 1px solid var(--border-color); padding: 0.8rem 1.2rem; background: #fff; transition: all 0.3s ease; }
     .custom-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(199, 139, 125, 0.15); }
-    .cart-wrapper { border-radius: 1.5rem; background: #fff; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(59,51,49,0.04); display: flex; flex-direction: column; }
-    .btn-pay { border-radius: 1rem; background: var(--primary-color); color: #fff; font-weight: 700; border: none; padding: 1rem; transition: all 0.3s; }
+    .cart-wrapper { height: calc(100dvh - 110px) !important; border-radius: 1.5rem; background: #fff; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(59,51,49,0.04); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .cart-wrapper .custom-input { padding: .35rem .55rem; }
+    .cart-wrapper .input-group-text { padding: .3rem .5rem; }
+    .cart-items { flex: 1 1 auto; min-height: 48px; overflow-y: auto; }
+    .cart-checkout { flex: 0 0 auto; }
+    .pos-panel #product_grid { flex: 1 1 0; min-height: 0; overflow-y: auto; align-content: start; }
+    .btn-pay { border-radius: 1rem; background: var(--primary-color); color: #fff; font-weight: 700; border: none; padding: .45rem .75rem; transition: all 0.3s; }
     .btn-pay:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-2px); }
     .btn-pay:disabled { background: #e9ecef; color: #adb5bd; }
     .hide-scroll::-webkit-scrollbar { display: none; }
     .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
     .catalog-card { border: 1px solid var(--border-color); border-radius: 1.25rem; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; }
     .catalog-card:hover { transform: translateY(-4px); box-shadow: 0 1rem 2rem rgba(59,51,49,.10) !important; }
-    .catalog-photo { height: 150px; background: linear-gradient(135deg, #fbf5f2, #f5e9e4); }
+    .catalog-photo { height: 110px; background: linear-gradient(135deg, #fbf5f2, #f5e9e4); }
     .catalog-photo img { object-fit: contain; padding: .6rem; }
+    .catalog-card .card-body { padding: .65rem !important; }
     .catalog-add { border-radius: 999px; background: var(--primary-color); color: #fff; }
     .catalog-add:hover { color: #fff; background: var(--primary-hover); }
     .cart-controls .form-control { min-width: 0; }
     .input-group > .input-group-text { border-radius: 1rem 0 0 1rem; }
     .input-group > .custom-input { border-radius: 0 1rem 1rem 0; }
+    @media (max-width: 991.98px) {
+        .pos-page { height: auto; min-height: 0; overflow: visible; }
+        .pos-layout { height: auto; }
+        .pos-panel { height: auto !important; min-height: 65vh; }
+        .cart-wrapper { height: auto !important; min-height: 0; }
+        .cart-items { flex: 0 0 auto; max-height: 260px; }
+    }
 </style>
 
-<div class="container-fluid py-4 px-lg-4">
+<div class="container-fluid py-2 px-2 px-lg-3 pos-page">
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show fw-medium border-0 shadow-sm rounded-4" role="alert">
         <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -48,9 +63,9 @@
     </div>
     @endif
 
-    <div class="row g-4">
+    <div class="row g-3 pos-layout">
         <div class="col-12 col-lg-8 col-xl-9">
-            <div class="pos-panel h-100 d-flex flex-column" style="min-height: 80vh;">
+            <div class="pos-panel h-100 d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                     <div>
                         <span class="small text-uppercase fw-bold" style="letter-spacing:.1em;color:var(--primary-color);">Katalog Toko</span>
@@ -98,68 +113,68 @@
                     </div>
                 </div>
 
-                <div class="row g-3 flex-grow-1 overflow-auto hide-scroll pb-4" id="product_grid" style="max-height: 60vh;">
+                <div class="row g-3 flex-grow-1 overflow-auto hide-scroll pb-2" id="product_grid" style="min-height: 0;">
                     <!-- Dirender JS -->
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-lg-4 col-xl-3">
-            <div class="cart-wrapper p-4 h-100" style="min-height: 80vh;">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="font-serif fw-bold text-dark mb-0">Keranjang</h4>
-                    <span class="badge bg-light text-dark border rounded-pill px-3 py-2"><span id="item_count">0</span> Item</span>
+            <div class="cart-wrapper p-2 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="font-serif fw-bold text-dark mb-0">Keranjang</h5>
+                    <span class="badge bg-light text-dark border rounded-pill px-3 py-2"><span id="item_count">0</span></span>
                 </div>
                 
-                <div class="flex-grow-1 overflow-auto hide-scroll mb-4" style="max-height: 350px;" id="cart_body">
-                    <div class="text-center text-muted mt-5 pt-4" id="empty_cart_msg">
-                        <i class="fas fa-shopping-bag fa-3x mb-3" style="color: var(--border-color);"></i>
-                        <p class="fw-medium">Belum ada produk yang dipilih.</p>
+                <div class="cart-items hide-scroll mb-1" id="cart_body">
+                    <div class="text-center text-muted py-2" id="empty_cart_msg">
+                        <i class="fas fa-shopping-bag fs-5 mb-1 d-block" style="color: var(--border-color);"></i>
+                        <small>Keranjang kosong</small>
                     </div>
                 </div>
 
-                <div class="mt-auto pt-3 border-top" style="border-color: var(--border-color) !important;">
+                <div class="cart-checkout mt-auto pt-2 border-top" style="border-color: var(--border-color) !important;">
                     <form action="{{ route('pos.store') }}" method="POST" id="form_transaksi">
                         @csrf
                         <input type="hidden" name="cart_data" id="cart_data_input">
                         <input type="hidden" name="total_amount" id="total_amount_input" value="0">
 
-                        <div class="small mb-2">
-                            <div class="d-flex justify-content-between text-muted mb-1"><span>Subtotal produk</span><span id="gross_subtotal_display">Rp 0</span></div>
-                            <div class="d-flex justify-content-between text-muted mb-1"><span>Diskon produk</span><span id="product_discount_display">−Rp 0</span></div>
-                            <div class="d-flex justify-content-between fw-semibold text-dark border-top pt-2 mt-2"><span>Subtotal setelah diskon produk</span><span id="subtotal_display">Rp 0</span></div>
+                        <div class="small mb-1">
+                            <div class="d-flex justify-content-between text-muted"><span>Diskon item</span><span id="product_discount_display">−Rp 0</span></div>
+                            <div class="d-flex justify-content-between fw-semibold text-dark border-top pt-1 mt-1"><span>Subtotal</span><span id="subtotal_display">Rp 0</span></div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="order_discount_input" class="fw-bold text-muted small mb-2">Diskon seluruh transaksi (Rp)</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white">Rp</span>
-                                <input type="text" inputmode="numeric" autocomplete="off" class="form-control custom-input" name="discount_amount" id="order_discount_input" value="0" placeholder="0" aria-describedby="order_discount_preview">
+                        <div class="row g-2 mb-1">
+                            <div class="col-6">
+                                <label for="order_discount_input" class="fw-bold text-muted small mb-1">Diskon</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">Rp</span>
+                                    <input type="text" inputmode="numeric" autocomplete="off" class="form-control custom-input" name="discount_amount" id="order_discount_input" value="0" placeholder="0" aria-describedby="order_discount_preview">
+                                </div>
                             </div>
-                            <div class="form-text" id="order_discount_preview">Maksimal sebesar subtotal keranjang.</div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <span class="text-muted fw-bold">Total Tagihan</span>
-                            <h2 class="font-serif fw-bold text-dark mb-0" id="total_display">Rp 0</h2>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="fw-bold text-muted small mb-2">Uang Diterima (Rp)</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white fs-5 fw-bold">Rp</span>
-                                <input type="text" inputmode="numeric" autocomplete="off" class="form-control custom-input fs-5 fw-bold" name="pay_amount" id="pay_amount" required placeholder="0" aria-describedby="pay_amount_preview">
+                            <div class="col-6">
+                                <label for="pay_amount" class="fw-bold text-muted small mb-1">Diterima</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">Rp</span>
+                                    <input type="text" inputmode="numeric" autocomplete="off" class="form-control custom-input fw-bold" name="pay_amount" id="pay_amount" required placeholder="0">
+                                </div>
                             </div>
-                            <div class="form-text" id="pay_amount_preview">Masukkan nominal rupiah.</div>
+                        </div>
+
+                        <small class="visually-hidden" id="order_discount_preview">Maks. Rp 0</small>
+
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted fw-bold">Total</span>
+                            <h5 class="font-serif fw-bold text-dark mb-0" id="total_display">Rp 0</h5>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-1 px-2 py-1 rounded-3" style="background: var(--bg-cream); border: 1px solid var(--border-color);">
+                            <span class="text-muted fw-bold small">Kembali</span>
+                            <span class="font-serif fw-bold text-dark" id="kembalian_display">Rp 0</span>
                         </div>
                         
-                        <div class="d-flex justify-content-between align-items-center mb-4 px-3 py-3 rounded-4" style="background: var(--bg-cream); border: 1px solid var(--border-color);">
-                            <span class="text-muted fw-bold small">Kembalian</span>
-                            <span class="font-serif fw-bold fs-5 text-dark" id="kembalian_display">Rp 0</span>
-                        </div>
-                        
-                        <button type="submit" class="btn-pay w-100 fs-6" id="btn_bayar" disabled>
-                            Proses Pembayaran
+                        <button type="submit" class="btn-pay w-100" id="btn_bayar" disabled>
+                            Bayar
                         </button>
                     </form>
                 </div>
@@ -183,12 +198,10 @@
     const totalDisplay = document.getElementById('total_display');
     const totalAmountInput = document.getElementById('total_amount_input');
     const orderDiscountInput = document.getElementById('order_discount_input');
-    const grossSubtotalDisplay = document.getElementById('gross_subtotal_display');
     const productDiscountDisplay = document.getElementById('product_discount_display');
     const subtotalDisplay = document.getElementById('subtotal_display');
     const payAmountInput = document.getElementById('pay_amount');
     const orderDiscountPreview = document.getElementById('order_discount_preview');
-    const payAmountPreview = document.getElementById('pay_amount_preview');
     const kembalianDisplay = document.getElementById('kembalian_display');
     const btnBayar = document.getElementById('btn_bayar');
     const cartDataInput = document.getElementById('cart_data_input');
@@ -244,16 +257,15 @@
                         <img src="${escapeHtml(imagePath)}" class="w-100 h-100" alt="${productName}" loading="lazy">
                         <span class="badge position-absolute top-0 end-0 m-2 rounded-pill bg-white text-dark shadow-sm">Stok ${Number(product.stock)}</span>
                     </div>
-                    <div class="card-body p-3 d-flex flex-column">
-                        <div class="d-flex flex-wrap gap-1 mb-2">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex flex-wrap gap-1 mb-1">
                             <span class="badge bg-light text-dark border rounded-pill">${categoryName}</span>
                             ${brandName ? `<span class="badge text-white rounded-pill" style="background-color:var(--primary-color);">${brandName}</span>` : ''}
                         </div>
-                        <h6 class="fw-bold text-dark mb-1 text-truncate" title="${productName}">${productName}</h6>
-                        <div class="small text-muted mb-3">${escapeHtml(product.sku || 'SKU tidak tersedia')}</div>
+                        <h6 class="fw-bold text-dark mb-2 text-truncate" title="${productName}">${productName}</h6>
                         <div class="mt-auto d-flex justify-content-between align-items-center gap-2">
-                            <span class="fw-bold text-dark">Rp ${money(product.selling_price)}</span>
-                            <button type="button" class="btn btn-sm catalog-add px-3" data-product-id="${Number(product.id)}" aria-label="Tambah ${productName}">
+                            <span class="fw-bold text-dark text-nowrap">Rp ${money(product.selling_price)}</span>
+                            <button type="button" class="btn btn-sm catalog-add px-2 text-nowrap" data-product-id="${Number(product.id)}" aria-label="Tambah ${productName}">
                                 <i class="fas fa-plus me-1"></i>Tambah
                             </button>
                         </div>
@@ -297,34 +309,32 @@
         cart.forEach((item, index) => {
             const line = document.createElement('div');
             const lineSubtotal = item.price * item.qty - item.discount;
-            line.className = 'card border-0 rounded-4 bg-light mb-3';
+            line.className = 'card border-0 rounded-4 bg-light mb-2';
             line.dataset.cartIndex = String(index);
             line.innerHTML = `
-                <div class="card-body p-3">
-                    <div class="d-flex justify-content-between gap-2 mb-2">
+                <div class="card-body p-2">
+                    <div class="d-flex justify-content-between gap-2 mb-1">
                         <div class="min-w-0">
                             <h6 class="fw-bold text-dark mb-1 text-truncate" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</h6>
-                            <small class="text-muted">Rp ${money(item.price)} / unit</small>
+                            <small class="text-muted">Rp ${money(item.price)}</small>
                         </div>
                         <button type="button" class="btn btn-sm btn-link text-danger p-0 align-self-start" data-cart-action="remove" aria-label="Hapus ${escapeHtml(item.name)} dari keranjang"><i class="fas fa-trash-can"></i></button>
                     </div>
-                    <div class="row g-2 cart-controls">
+                    <div class="row g-2 align-items-end cart-controls">
                         <div class="col-5">
-                            <label class="form-label small text-muted mb-1">Jumlah</label>
                             <div class="input-group input-group-sm">
                                 <button type="button" class="btn btn-white border" data-cart-action="step" data-delta="-1" aria-label="Kurangi jumlah">−</button>
                                 <input type="number" class="form-control text-center" data-cart-action="quantity" min="1" max="${item.stock}" step="1" value="${item.qty}" aria-label="Jumlah ${escapeHtml(item.name)}">
                                 <button type="button" class="btn btn-white border" data-cart-action="step" data-delta="1" aria-label="Tambah jumlah">+</button>
                             </div>
-                            <small class="text-muted">Stok ${item.stock}</small>
                         </div>
                         <div class="col-7">
-                            <label class="form-label small text-muted mb-1">Diskon produk (Rp/baris)</label>
+                            <label class="form-label small text-muted mb-1">Diskon</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white">Rp</span>
                                 <input type="text" inputmode="numeric" autocomplete="off" class="form-control" data-cart-action="discount" value="${item.discount}" aria-label="Diskon untuk ${escapeHtml(item.name)}">
                             </div>
-                            <small class="text-muted" data-discount-summary>Diskon Rp ${money(item.discount)} · Nilai baris Rp ${money(lineSubtotal)}</small>
+                            <small class="text-muted" data-discount-summary>Baris Rp ${money(lineSubtotal)}</small>
                         </div>
                     </div>
                 </div>`;
@@ -337,12 +347,11 @@
         if (clampOrderDiscount && amount(orderDiscountInput) !== totals.orderDiscount) {
             orderDiscountInput.value = String(totals.orderDiscount);
         }
-        grossSubtotalDisplay.textContent = 'Rp ' + money(totals.grossSubtotal);
         productDiscountDisplay.textContent = '−Rp ' + money(totals.productDiscount);
         subtotalDisplay.textContent = 'Rp ' + money(totals.subtotal);
         totalAmountInput.value = String(totals.total);
         totalDisplay.textContent = 'Rp ' + money(totals.total);
-        orderDiscountPreview.textContent = `Diskon saat ini Rp ${money(totals.orderDiscount)}. Maksimal Rp ${money(totals.subtotal)}.`;
+        orderDiscountPreview.textContent = `Maks. Rp ${money(totals.subtotal)}`;
         cartDataInput.value = JSON.stringify(cart.map(item => ({ id: item.id, qty: item.qty, discount: item.discount })));
         itemCount.textContent = String(cart.reduce((sum, item) => sum + item.qty, 0));
         calculateKembalian();
@@ -362,7 +371,6 @@
 
         kembalianDisplay.textContent = paymentIsValid ? 'Rp ' + money(change) : 'Uang Kurang';
         kembalianDisplay.style.color = paymentIsValid ? 'var(--text-dark)' : 'red';
-        payAmountPreview.textContent = `Nominal diterima: Rp ${money(paid)}.`;
         btnBayar.disabled = !paymentIsValid;
     }
 
@@ -420,7 +428,7 @@
         normalizeAmountInput(input);
         item.discount = Math.max(0, Math.min(item.price * item.qty, amount(input)));
         input.value = String(item.discount);
-        line.querySelector('[data-discount-summary]').textContent = `Diskon Rp ${money(item.discount)} · Nilai baris Rp ${money(item.price * item.qty - item.discount)}`;
+        line.querySelector('[data-discount-summary]').textContent = `Baris Rp ${money(item.price * item.qty - item.discount)}`;
         updateTotals(false);
     });
 
