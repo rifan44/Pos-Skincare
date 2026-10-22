@@ -9,7 +9,16 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['total_amount', 'pay_amount'];
+    protected $fillable = ['subtotal_amount', 'discount_amount', 'total_amount', 'pay_amount'];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Transaction $transaction) {
+            if (! array_key_exists('subtotal_amount', $transaction->getAttributes())) {
+                $transaction->subtotal_amount = (int) $transaction->total_amount + (int) ($transaction->discount_amount ?? 0);
+            }
+        });
+    }
 
     // Satu transaksi memiliki banyak detail (banyak barang yang dibeli)
     public function details()

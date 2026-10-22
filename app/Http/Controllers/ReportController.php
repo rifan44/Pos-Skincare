@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\TransactionReturn;
-use App\Models\Setting;
 use App\Services\TransactionFinancialSummary;
 use Illuminate\Http\Request;
 
@@ -23,13 +23,13 @@ class ReportController extends Controller
         $query = Transaction::with('details')->orderBy('created_at', 'desc');
 
         if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            $query->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
         }
 
         $transactions = $query->get();
         $returnsQuery = TransactionReturn::with('details')->orderBy('created_at', 'desc');
         if ($startDate && $endDate) {
-            $returnsQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            $returnsQuery->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
         }
         $returns = $returnsQuery->get();
 
@@ -37,6 +37,7 @@ class ReportController extends Controller
         $dailyReports = $summary['daily_reports'];
         $totalOmzet = $summary['total_omzet'];
         $grossOmzet = $summary['gross_omzet'];
+        $totalDiskon = $summary['total_discount'];
         $totalRefund = $summary['total_refund'];
         $totalModal = $summary['total_modal'];
         $totalLaba = $summary['total_laba'];
@@ -44,7 +45,7 @@ class ReportController extends Controller
         $hppBelumDiketahui = $summary['hpp_belum_diketahui'];
 
         return view('pages.reports.index', compact(
-            'dailyReports', 'totalOmzet', 'grossOmzet', 'totalRefund', 'totalModal', 'totalLaba', 'totalItem',
+            'dailyReports', 'totalOmzet', 'grossOmzet', 'totalDiskon', 'totalRefund', 'totalModal', 'totalLaba', 'totalItem',
             'hppBelumDiketahui', 'startDate', 'endDate'
         ));
     }
@@ -61,12 +62,12 @@ class ReportController extends Controller
 
         $query = Transaction::with('details')->orderBy('created_at', 'desc');
         if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            $query->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
         }
         $transactions = $query->get();
         $returnsQuery = TransactionReturn::with('details')->orderBy('created_at', 'desc');
         if ($startDate && $endDate) {
-            $returnsQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            $returnsQuery->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
         }
         $returns = $returnsQuery->get();
 
@@ -74,13 +75,14 @@ class ReportController extends Controller
         $dailyReports = $summary['daily_reports'];
         $totalOmzet = $summary['total_omzet'];
         $grossOmzet = $summary['gross_omzet'];
+        $totalDiskon = $summary['total_discount'];
         $totalRefund = $summary['total_refund'];
         $totalLaba = $summary['total_laba'];
         $hppBelumDiketahui = $summary['hpp_belum_diketahui'];
         $setting = Setting::first();
 
         return view('pages.reports.pdf', compact(
-            'dailyReports', 'totalOmzet', 'grossOmzet', 'totalRefund', 'totalLaba', 'hppBelumDiketahui',
+            'dailyReports', 'totalOmzet', 'grossOmzet', 'totalDiskon', 'totalRefund', 'totalLaba', 'hppBelumDiketahui',
             'startDate', 'endDate', 'setting'
         ));
     }

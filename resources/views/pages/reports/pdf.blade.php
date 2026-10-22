@@ -33,6 +33,7 @@
             <tr>
                 <th>Tanggal Penjualan</th>
                 <th class="text-right">Omzet Kotor</th>
+                <th class="text-right">Diskon</th>
                 <th class="text-right">Refund</th>
                 <th class="text-right">Omzet Bersih</th>
                 <th class="text-right">Laba Kotor Tercatat</th>
@@ -43,13 +44,14 @@
             <tr>
                 <td>{{ \Carbon\Carbon::parse($report['date'])->format('d M Y') }}</td>
                 <td class="text-right">Rp {{ number_format($report['gross_omzet'], 0, ',', '.') }}</td>
+                <td class="text-right">Rp {{ number_format($report['discounts'], 0, ',', '.') }}</td>
                 <td class="text-right">Rp {{ number_format($report['refunds'], 0, ',', '.') }}</td>
                 <td class="text-right">Rp {{ number_format($report['omzet'], 0, ',', '.') }}</td>
                 <td class="text-right fw-bold" style="color: green;">Rp {{ number_format($report['laba'], 0, ',', '.') }}</td>
             </tr>
             @empty
             <tr>
-                <td colspan="5" class="text-center">Tidak ada transaksi atau retur pada periode ini.</td>
+                <td colspan="6" class="text-center">Tidak ada transaksi atau retur pada periode ini.</td>
             </tr>
             @endforelse
         </tbody>
@@ -57,6 +59,7 @@
 
     <div class="summary-box">
         <h3>Omzet Kotor: Rp {{ number_format($grossOmzet, 0, ',', '.') }}</h3>
+        <h3>Total Diskon: Rp {{ number_format($totalDiskon, 0, ',', '.') }}</h3>
         <h3>Total Refund: Rp {{ number_format($totalRefund, 0, ',', '.') }}</h3>
         <h3>Omzet Bersih: Rp {{ number_format($totalOmzet, 0, ',', '.') }}</h3>
         <h3 style="color: green;">Total Laba Kotor Tercatat: Rp {{ number_format($totalLaba, 0, ',', '.') }}</h3>

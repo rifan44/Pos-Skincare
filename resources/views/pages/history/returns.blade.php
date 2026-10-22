@@ -114,7 +114,7 @@
                                 @php($alreadyReturned = $returnedQuantities[$detail->id] ?? 0)
                                 @php($remaining = max(0, $detail->quantity - $alreadyReturned))
                                 <tr>
-                                    <td>{{ $detail->product->name ?? 'Produk tidak tersedia' }}<br><small class="text-muted">Rp {{ number_format($detail->price, 0, ',', '.') }} / unit</small></td>
+                                    <td>{{ $detail->product->name ?? 'Produk tidak tersedia' }}<br><small class="text-muted">Harga awal Rp {{ number_format($detail->price, 0, ',', '.') }} / unit · nilai bersih seluruh baris Rp {{ number_format($detail->subtotal, 0, ',', '.') }} setelah diskon</small></td>
                                     <td class="text-center">{{ $detail->quantity }}</td>
                                     <td class="text-center">{{ $alreadyReturned }}</td>
                                     <td class="text-center fw-bold">{{ $remaining }}</td>

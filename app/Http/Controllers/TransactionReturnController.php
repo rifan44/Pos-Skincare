@@ -74,14 +74,23 @@ class TransactionReturnController extends Controller
                     ->get()
                     ->keyBy('id');
 
-                if ($saleDetails->isEmpty() || (int) $saleDetails->sum('subtotal') !== (int) $sale->total_amount) {
+                if ($saleDetails->isEmpty()
+                    || (int) $saleDetails->sum('subtotal') !== (int) $sale->total_amount
+                    || (int) $sale->subtotal_amount - (int) $sale->discount_amount !== (int) $sale->total_amount) {
                     throw ValidationException::withMessages([
                         'items' => 'Rincian struk tidak cocok dengan total transaksi. Retur otomatis ditolak agar nominal refund tetap akurat.',
                     ]);
                 }
 
                 foreach ($saleDetails as $detail) {
-                    if ((int) $detail->subtotal !== (int) $detail->price * (int) $detail->quantity) {
+                    $grossAmount = (int) $detail->price * (int) $detail->quantity;
+                    $itemSubtotal = $grossAmount - (int) $detail->discount_amount;
+
+                    if ((int) $detail->quantity < 1
+                        || (int) $detail->discount_amount < 0
+                        || (int) $detail->discount_amount > $grossAmount
+                        || (int) $detail->subtotal < 0
+                        || (int) $detail->subtotal > $itemSubtotal) {
                         throw ValidationException::withMessages([
                             'items' => 'Rincian harga struk tidak konsisten. Retur otomatis ditolak agar nominal refund tetap akurat.',
                         ]);
@@ -121,14 +130,14 @@ class TransactionReturnController extends Controller
 
                     if ($restockedQuantity > $quantity) {
                         throw ValidationException::withMessages([
-                            'items.' . $detailId . '.restocked_quantity' => 'Jumlah yang masuk kembali ke stok tidak boleh melebihi jumlah barang retur.',
+                            'items.'.$detailId.'.restocked_quantity' => 'Jumlah yang masuk kembali ke stok tidak boleh melebihi jumlah barang retur.',
                         ]);
                     }
 
                     if ($quantity === 0) {
                         if ($restockedQuantity !== 0) {
                             throw ValidationException::withMessages([
-                                'items.' . $detailId . '.restocked_quantity' => 'Isi jumlah barang retur sebelum menentukan jumlah stok kembali.',
+                                'items.'.$detailId.'.restocked_quantity' => 'Isi jumlah barang retur sebelum menentukan jumlah stok kembali.',
                             ]);
                         }
 
@@ -140,15 +149,19 @@ class TransactionReturnController extends Controller
 
                     if ($quantity > $remainingQuantity) {
                         throw ValidationException::withMessages([
-                            'items.' . $detailId . '.quantity' => 'Jumlah retur melebihi sisa barang yang belum diretur.',
+                            'items.'.$detailId.'.quantity' => 'Jumlah retur melebihi sisa barang yang belum diretur.',
                         ]);
                     }
 
-                    $refundAmount = (int) $saleDetail->price * $quantity;
+                    $returnedQuantityBefore = $returnedQuantities[$detailId] ?? 0;
+                    $unitRefund = intdiv((int) $saleDetail->subtotal, (int) $saleDetail->quantity);
+                    $extraRupiahUnits = (int) $saleDetail->subtotal % (int) $saleDetail->quantity;
+                    $refundAmount = ($unitRefund * $quantity)
+                        + max(0, min($returnedQuantityBefore + $quantity, $extraRupiahUnits) - min($returnedQuantityBefore, $extraRupiahUnits));
 
                     if (($returnedAmounts[$detailId] ?? 0) + $refundAmount > (int) $saleDetail->subtotal) {
                         throw ValidationException::withMessages([
-                            'items.' . $detailId . '.quantity' => 'Nominal retur melebihi nilai barang pada struk.',
+                            'items.'.$detailId.'.quantity' => 'Nominal retur melebihi nilai barang pada struk.',
                         ]);
                     }
 
@@ -225,7 +238,7 @@ class TransactionReturnController extends Controller
 
         return redirect()
             ->route('history.returns.index', $transaction)
-            ->with('success', 'Refund sebesar Rp ' . number_format($transactionReturn->total_amount, 0, ',', '.') . ' berhasil dicatat.');
+            ->with('success', 'Refund sebesar Rp '.number_format($transactionReturn->total_amount, 0, ',', '.').' berhasil dicatat.');
     }
 
     public function print(TransactionReturn $transactionReturn): View

@@ -13,6 +13,13 @@
     .btn-pay:disabled { background: #e9ecef; color: #adb5bd; }
     .hide-scroll::-webkit-scrollbar { display: none; }
     .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    .catalog-card { border: 1px solid var(--border-color); border-radius: 1.25rem; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; }
+    .catalog-card:hover { transform: translateY(-4px); box-shadow: 0 1rem 2rem rgba(59,51,49,.10) !important; }
+    .catalog-photo { height: 150px; background: linear-gradient(135deg, #fbf5f2, #f5e9e4); }
+    .catalog-photo img { object-fit: contain; padding: .6rem; }
+    .catalog-add { border-radius: 999px; background: var(--primary-color); color: #fff; }
+    .catalog-add:hover { color: #fff; background: var(--primary-hover); }
+    .cart-controls .form-control { min-width: 0; }
 </style>
 
 <div class="container-fluid py-4 px-lg-4">
@@ -42,14 +49,29 @@
     <div class="row g-4">
         <div class="col-12 col-lg-7 col-xl-8">
             <div class="pos-panel h-100 d-flex flex-column" style="min-height: 80vh;">
-                <h4 class="font-serif fw-bold text-dark mb-4">Pilih Skincare</h4>
+                <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                    <div>
+                        <span class="small text-uppercase fw-bold" style="letter-spacing:.1em;color:var(--primary-color);">Katalog Toko</span>
+                        <h4 class="font-serif fw-bold text-dark mb-0">Pilih Skincare</h4>
+                    </div>
+                    <span class="badge rounded-pill bg-white text-muted border px-3 py-2">Klik produk untuk menambahkan</span>
+                </div>
 
                 <div class="row g-3 mb-4">
-                    <div class="col-md-7">
-                        <input type="text" id="barcode_input" class="form-control custom-input w-100" placeholder="Scan Barcode disini..." autofocus>
+                    <div class="col-md-4">
+                        <label for="barcode_input" class="form-label small fw-bold text-muted mb-1">Scanner Barcode</label>
+                        <input type="text" id="barcode_input" class="form-control custom-input w-100" placeholder="Scan SKU lalu Enter" autocomplete="off" autofocus>
                     </div>
                     <div class="col-md-5">
-                        <input type="text" id="search_manual" class="form-control custom-input w-100" placeholder="Cari nama produk...">
+                        <label for="search_manual" class="form-label small fw-bold text-muted mb-1">Pencarian</label>
+                        <input type="search" id="search_manual" class="form-control custom-input w-100" placeholder="Nama, SKU, jenis, atau merek...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sort_products" class="form-label small fw-bold text-muted mb-1">Urutkan nama</label>
+                        <select id="sort_products" class="form-select custom-input">
+                            <option value="az">A–Z</option>
+                            <option value="za">Z–A</option>
+                        </select>
                     </div>
                 </div>
 
@@ -99,6 +121,18 @@
                         @csrf
                         <input type="hidden" name="cart_data" id="cart_data_input">
                         <input type="hidden" name="total_amount" id="total_amount_input" value="0">
+
+                        <div class="small mb-2">
+                            <div class="d-flex justify-content-between text-muted mb-1"><span>Subtotal produk</span><span id="gross_subtotal_display">Rp 0</span></div>
+                            <div class="d-flex justify-content-between text-muted mb-1"><span>Diskon produk</span><span id="product_discount_display">−Rp 0</span></div>
+                            <div class="d-flex justify-content-between fw-semibold text-dark border-top pt-2 mt-2"><span>Subtotal setelah diskon produk</span><span id="subtotal_display">Rp 0</span></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="order_discount_input" class="fw-bold text-muted small mb-2">Diskon seluruh transaksi (Rp)</label>
+                            <input type="number" class="form-control custom-input" name="discount_amount" id="order_discount_input" value="0" min="0" step="1" placeholder="0">
+                            <div class="form-text">Dibatasi maksimal sebesar subtotal keranjang.</div>
+                        </div>
                         
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <span class="text-muted fw-bold">Total Tagihan</span>
@@ -133,11 +167,16 @@
     const searchManual = document.getElementById('search_manual');
     const categoryFilter = document.getElementById('category_filter');
     const brandFilter = document.getElementById('brand_filter');
+    const sortFilter = document.getElementById('sort_products');
     const productGrid = document.getElementById('product_grid');
     const cartBody = document.getElementById('cart_body');
     const emptyMsg = document.getElementById('empty_cart_msg');
     const totalDisplay = document.getElementById('total_display');
     const totalAmountInput = document.getElementById('total_amount_input');
+    const orderDiscountInput = document.getElementById('order_discount_input');
+    const grossSubtotalDisplay = document.getElementById('gross_subtotal_display');
+    const productDiscountDisplay = document.getElementById('product_discount_display');
+    const subtotalDisplay = document.getElementById('subtotal_display');
     const payAmountInput = document.getElementById('pay_amount');
     const kembalianDisplay = document.getElementById('kembalian_display');
     const btnBayar = document.getElementById('btn_bayar');
@@ -146,179 +185,245 @@
 
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, character => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
         })[character]);
     }
 
+    const productCollator = new Intl.Collator('id', { sensitivity: 'base', numeric: true });
+    const money = value => Number(value || 0).toLocaleString('id-ID');
+
     function renderProducts() {
-        productGrid.innerHTML = ''; 
         const selectedCategory = categoryFilter.value;
         const selectedBrand = brandFilter.value;
-        const searchQuery = searchManual.value.trim().toLowerCase();
-
-        let filteredProducts = products.filter(p => {
-            const matchCategory = !selectedCategory || String(p.category_id) === selectedCategory;
-            const matchBrand = !selectedBrand || String(p.brand_id ?? '') === selectedBrand;
-            const searchableFields = [p.name, p.sku, p.category?.name, p.brand?.name];
+        const searchQuery = searchManual.value.trim().toLocaleLowerCase('id');
+        const direction = sortFilter.value === 'za' ? -1 : 1;
+        const filteredProducts = products.filter(product => {
+            const matchCategory = !selectedCategory || String(product.category_id) === selectedCategory;
+            const matchBrand = !selectedBrand || String(product.brand_id ?? '') === selectedBrand;
+            const searchableFields = [product.name, product.sku, product.category?.name, product.brand?.name];
             const matchSearch = !searchQuery || searchableFields.some(value =>
-                String(value ?? '').toLowerCase().includes(searchQuery)
+                String(value ?? '').toLocaleLowerCase('id').includes(searchQuery)
             );
 
             return matchCategory && matchBrand && matchSearch;
-        });
+        }).sort((a, b) => direction * productCollator.compare(a.name, b.name));
 
-        if(filteredProducts.length === 0) {
-            productGrid.innerHTML = `<div class="col-12 text-center text-muted mt-5 pt-5 fw-medium">Produk tidak ditemukan.</div>`;
+        productGrid.innerHTML = '';
+        if (filteredProducts.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'col-12 text-center text-muted py-5';
+            emptyState.innerHTML = '<i class="fas fa-magnifying-glass fs-2 mb-3 d-block opacity-50"></i>Produk tidak ditemukan.';
+            productGrid.appendChild(emptyState);
             return;
         }
 
-        filteredProducts.forEach(p => {
-            let card = document.createElement('div');
-            card.className = 'col-6 col-md-4 col-xl-3 mb-3';
-            let imagePath = p.image ? '/storage/' + p.image : 'https://placehold.co/400x400/fdfbf7/c78b7d?text=No+Image';
-            const productName = escapeHtml(p.name);
-            const categoryName = escapeHtml(p.category?.name || 'Jenis belum diatur');
-            const brandName = p.brand?.name ? escapeHtml(p.brand.name) : '';
-            
+        filteredProducts.forEach(product => {
+            const card = document.createElement('div');
+            card.className = 'col-6 col-md-4 col-xl-3';
+            const imagePath = product.image ? '/storage/' + product.image : 'https://placehold.co/400x400/fdfbf7/c78b7d?text=No+Image';
+            const productName = escapeHtml(product.name);
+            const categoryName = escapeHtml(product.category?.name || 'Jenis belum diatur');
+            const brandName = product.brand?.name ? escapeHtml(product.brand.name) : '';
+
             card.innerHTML = `
-                <div class="card border-0 shadow-sm p-2 d-flex flex-column bg-white h-100" 
-                     style="border-radius: 1.25rem; cursor: pointer; transition: all 0.3s ease; border: 1px solid var(--border-color) !important;" 
-                     onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='var(--primary-color)'" 
-                     onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border-color)'" 
-                     onclick="addToCartManual(${p.id})">
-                    
-                    <div class="position-relative w-100 mb-2" style="height: 120px; border-radius: 1rem; overflow: hidden; background: var(--bg-cream);">
-                        <img src="${escapeHtml(imagePath)}" class="w-100 h-100" style="object-fit: cover;" alt="${productName}">
-                        <span class="badge position-absolute top-0 start-0 m-2 shadow-sm" style="background-color: var(--primary-color); font-size: 0.7rem; font-weight: 500;">
-                            Stok: ${p.stock}
-                        </span>
+                <article class="card catalog-card border-0 shadow-sm bg-white h-100">
+                    <div class="catalog-photo position-relative d-flex align-items-center justify-content-center">
+                        <img src="${escapeHtml(imagePath)}" class="w-100 h-100" alt="${productName}" loading="lazy">
+                        <span class="badge position-absolute top-0 end-0 m-2 rounded-pill bg-white text-dark shadow-sm">Stok ${Number(product.stock)}</span>
                     </div>
-                    
-                    <div class="px-2 d-flex flex-column flex-grow-1 pb-1">
-                        <div class="d-flex flex-wrap gap-1 mb-1">
-                            <span class="badge bg-light text-dark border">${categoryName}</span>
-                            ${brandName ? `<span class="badge text-white" style="background-color: var(--primary-color);">${brandName}</span>` : ''}
+                    <div class="card-body p-3 d-flex flex-column">
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            <span class="badge bg-light text-dark border rounded-pill">${categoryName}</span>
+                            ${brandName ? `<span class="badge text-white rounded-pill" style="background-color:var(--primary-color);">${brandName}</span>` : ''}
                         </div>
-                        <h6 class="font-serif fw-bold text-dark mt-1 mb-1 text-truncate" style="font-size: 1rem;" title="${productName}">
-                            ${productName}
-                        </h6>
-                        <div class="mt-auto">
-                            <h6 class="fw-bold mb-0" style="color: var(--text-muted); font-size: 0.95rem;">
-                                Rp ${p.selling_price.toLocaleString('id-ID')}
-                            </h6>
+                        <h6 class="fw-bold text-dark mb-1 text-truncate" title="${productName}">${productName}</h6>
+                        <div class="small text-muted mb-3">${escapeHtml(product.sku || 'SKU tidak tersedia')}</div>
+                        <div class="mt-auto d-flex justify-content-between align-items-center gap-2">
+                            <span class="fw-bold text-dark">Rp ${money(product.selling_price)}</span>
+                            <button type="button" class="btn btn-sm catalog-add px-3" data-product-id="${Number(product.id)}" aria-label="Tambah ${productName}">
+                                <i class="fas fa-plus me-1"></i>Tambah
+                            </button>
                         </div>
                     </div>
-                </div>
-            `;
+                </article>`;
             productGrid.appendChild(card);
         });
     }
+
+    function addToCart(product) {
+        const existingItem = cart.find(item => item.id === Number(product.id));
+        if (existingItem) {
+            if (existingItem.qty >= Number(product.stock)) {
+                Swal.fire({ icon: 'warning', title: 'Stok tidak mencukupi', text: 'Jumlah produk di keranjang sudah mencapai stok tersedia.' });
+                return;
+            }
+            existingItem.qty += 1;
+        } else {
+            cart.push({ id: Number(product.id), name: product.name, price: Number(product.selling_price), qty: 1, discount: 0, stock: Number(product.stock) });
+        }
+        updateCartUI();
+    }
+
+    function getTotals() {
+        const grossSubtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+        const productDiscount = cart.reduce((sum, item) => sum + item.discount, 0);
+        const subtotal = grossSubtotal - productDiscount;
+        const requestedOrderDiscount = Math.max(0, Number.parseInt(orderDiscountInput.value, 10) || 0);
+        const orderDiscount = Math.min(requestedOrderDiscount, subtotal);
+
+        return { grossSubtotal, productDiscount, subtotal, orderDiscount, total: subtotal - orderDiscount };
+    }
+
+    function renderCartLines() {
+        cartBody.innerHTML = '';
+        if (cart.length === 0) {
+            cartBody.appendChild(emptyMsg);
+            return;
+        }
+
+        cart.forEach((item, index) => {
+            const line = document.createElement('div');
+            const lineSubtotal = item.price * item.qty - item.discount;
+            line.className = 'card border-0 rounded-4 bg-light mb-3';
+            line.dataset.cartIndex = String(index);
+            line.innerHTML = `
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between gap-2 mb-2">
+                        <div class="min-w-0">
+                            <h6 class="fw-bold text-dark mb-1 text-truncate" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</h6>
+                            <small class="text-muted">Rp ${money(item.price)} / unit</small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0 align-self-start" data-cart-action="remove" aria-label="Hapus ${escapeHtml(item.name)} dari keranjang"><i class="fas fa-trash-can"></i></button>
+                    </div>
+                    <div class="row g-2 cart-controls">
+                        <div class="col-5">
+                            <label class="form-label small text-muted mb-1">Jumlah</label>
+                            <div class="input-group input-group-sm">
+                                <button type="button" class="btn btn-white border" data-cart-action="step" data-delta="-1" aria-label="Kurangi jumlah">−</button>
+                                <input type="number" class="form-control text-center" data-cart-action="quantity" min="1" max="${item.stock}" step="1" value="${item.qty}" aria-label="Jumlah ${escapeHtml(item.name)}">
+                                <button type="button" class="btn btn-white border" data-cart-action="step" data-delta="1" aria-label="Tambah jumlah">+</button>
+                            </div>
+                            <small class="text-muted">Stok ${item.stock}</small>
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label small text-muted mb-1">Diskon produk (Rp/baris)</label>
+                            <input type="number" class="form-control form-control-sm" data-cart-action="discount" min="0" max="${item.price * item.qty}" step="1" value="${item.discount}" aria-label="Diskon untuk ${escapeHtml(item.name)}">
+                            <small class="text-muted">Nilai baris Rp ${money(lineSubtotal)}</small>
+                        </div>
+                    </div>
+                </div>`;
+            cartBody.appendChild(line);
+        });
+    }
+
+    function updateTotals(clampOrderDiscount = false) {
+        const totals = getTotals();
+        if (clampOrderDiscount) orderDiscountInput.value = String(totals.orderDiscount);
+        orderDiscountInput.max = String(totals.subtotal);
+        grossSubtotalDisplay.textContent = 'Rp ' + money(totals.grossSubtotal);
+        productDiscountDisplay.textContent = '−Rp ' + money(totals.productDiscount);
+        subtotalDisplay.textContent = 'Rp ' + money(totals.subtotal);
+        totalAmountInput.value = String(totals.total);
+        totalDisplay.textContent = 'Rp ' + money(totals.total);
+        cartDataInput.value = JSON.stringify(cart.map(item => ({ id: item.id, qty: item.qty, discount: item.discount })));
+        itemCount.textContent = String(cart.reduce((sum, item) => sum + item.qty, 0));
+        calculateKembalian();
+        return totals;
+    }
+
+    function updateCartUI(clampOrderDiscount = true) {
+        renderCartLines();
+        return updateTotals(clampOrderDiscount);
+    }
+
+    function calculateKembalian() {
+        const total = Number.parseInt(totalAmountInput.value, 10) || 0;
+        const paid = Number.parseInt(payAmountInput.value, 10) || 0;
+        const change = paid - total;
+        const paymentIsValid = payAmountInput.value !== '' && change >= 0 && cart.length > 0;
+
+        kembalianDisplay.textContent = paymentIsValid ? 'Rp ' + money(change) : 'Uang Kurang';
+        kembalianDisplay.style.color = paymentIsValid ? 'var(--text-dark)' : 'red';
+        btnBayar.disabled = !paymentIsValid;
+    }
+
     renderProducts();
+    updateCartUI();
 
     categoryFilter.addEventListener('change', renderProducts);
     brandFilter.addEventListener('change', renderProducts);
+    sortFilter.addEventListener('change', renderProducts);
     searchManual.addEventListener('input', renderProducts);
-    barcodeInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault(); 
-            let sku = this.value.trim();
-            let product = products.find(p => p.sku === sku);
-            if (product) addToCart(product);
-            else alert('Barcode tidak dikenali!');
-            this.value = ''; 
+    barcodeInput.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        const scannedSku = this.value.trim().toLocaleLowerCase('id');
+        const product = products.find(item => String(item.sku ?? '').trim().toLocaleLowerCase('id') === scannedSku);
+        if (product) addToCart(product);
+        else Swal.fire({ icon: 'error', title: 'Barcode tidak dikenali', text: 'Pastikan barcode produk terdaftar sebagai SKU.' });
+        this.value = '';
+    });
+
+    productGrid.addEventListener('click', event => {
+        const button = event.target.closest('[data-product-id]');
+        if (!button) return;
+        const product = products.find(item => Number(item.id) === Number(button.dataset.productId));
+        if (product) {
+            addToCart(product);
+            barcodeInput.focus({ preventScroll: true });
         }
     });
 
-    window.addToCartManual = function(id) {
-        let product = products.find(p => p.id === id);
-        if (product) addToCart(product);
-    }
+    cartBody.addEventListener('click', event => {
+        const button = event.target.closest('[data-cart-action]');
+        if (!button) return;
+        const line = button.closest('[data-cart-index]');
+        if (!line) return;
+        const index = Number(line.dataset.cartIndex);
+        const item = cart[index];
+        if (!item) return;
 
-    function addToCart(product) {
-        let existingItem = cart.find(item => item.id === product.id);
-        if (existingItem) {
-            if(existingItem.qty < product.stock) {
-                existingItem.qty += 1;
-                existingItem.subtotal = existingItem.qty * existingItem.price;
-            } else { alert('Stok tidak mencukupi!'); }
-        } else {
-            cart.push({ id: product.id, name: product.name, price: product.selling_price, qty: 1, subtotal: product.selling_price });
+        if (button.dataset.cartAction === 'remove') cart.splice(index, 1);
+        if (button.dataset.cartAction === 'step') {
+            item.qty = Math.max(1, Math.min(item.stock, item.qty + Number(button.dataset.delta)));
+            item.discount = Math.min(item.discount, item.price * item.qty);
         }
         updateCartUI();
-    }
+    });
 
-    function updateCartUI() {
-        cartBody.innerHTML = '';
-        let total = 0;
-        let qtyCount = 0;
+    cartBody.addEventListener('change', event => {
+        const input = event.target.closest('[data-cart-action="quantity"], [data-cart-action="discount"]');
+        if (!input) return;
+        const line = input.closest('[data-cart-index]');
+        const item = line ? cart[Number(line.dataset.cartIndex)] : null;
+        if (!item) return;
 
-        if(cart.length === 0) {
-            if(emptyMsg) cartBody.appendChild(emptyMsg);
+        if (input.dataset.cartAction === 'quantity') {
+            item.qty = Math.max(1, Math.min(item.stock, Number.parseInt(input.value, 10) || 1));
+            item.discount = Math.min(item.discount, item.price * item.qty);
         } else {
-            cart.forEach((item, index) => {
-                total += item.subtotal;
-                qtyCount += item.qty;
-                let div = document.createElement('div');
-                div.className = 'd-flex justify-content-between align-items-center mb-3 pb-3';
-                div.style.borderBottom = '1px solid var(--border-color)';
-                div.innerHTML = `
-                    <div class="pe-2">
-                        <h6 class="font-serif fw-bold mb-1 text-dark" style="font-size: 0.95rem;">${item.name}</h6>
-                        <span class="text-muted small">${item.qty} x Rp ${item.price.toLocaleString('id-ID')}</span>
-                    </div>
-                    <div class="text-end" style="min-width: 80px;">
-                        <h6 class="fw-bold mb-1 text-dark" style="font-size: 0.95rem;">Rp ${item.subtotal.toLocaleString('id-ID')}</h6>
-                        <button type="button" class="btn btn-link text-danger p-0 border-0 small text-decoration-none" onclick="removeFromCart(${index})"><i class="fas fa-times-circle"></i> Batal</button>
-                    </div>
-                `;
-                cartBody.appendChild(div);
-            });
+            item.discount = Math.max(0, Math.min(item.price * item.qty, Number.parseInt(input.value, 10) || 0));
         }
-
-        itemCount.innerText = qtyCount;
-        totalAmountInput.value = total;
-        totalDisplay.innerText = 'Rp ' + total.toLocaleString('id-ID');
-        cartDataInput.value = JSON.stringify(cart.map(item => ({ id: item.id, qty: item.qty })));
-        btnBayar.disabled = cart.length === 0;
-        calculateKembalian(); 
-    }
-
-    window.removeFromCart = function(index) {
-        cart.splice(index, 1);
         updateCartUI();
-    }
+    });
 
+    orderDiscountInput.addEventListener('input', () => updateTotals(false));
+    orderDiscountInput.addEventListener('change', () => updateTotals(true));
     payAmountInput.addEventListener('input', calculateKembalian);
 
-    function calculateKembalian() {
-        let total = parseInt(totalAmountInput.value) || 0;
-        let bayar = parseInt(payAmountInput.value) || 0;
-        let kembalian = bayar - total;
-
-        if (kembalian >= 0 && cart.length > 0) {
-            kembalianDisplay.innerText = 'Rp ' + kembalian.toLocaleString('id-ID');
-            kembalianDisplay.style.color = 'var(--text-dark)';
-            btnBayar.disabled = false;
-        } else {
-            kembalianDisplay.innerText = 'Uang Kurang';
-            kembalianDisplay.style.color = 'red';
-            btnBayar.disabled = true;
+    document.getElementById('form_transaksi').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const totals = updateTotals(true);
+        if (!payAmountInput.reportValidity() || Number.parseInt(payAmountInput.value, 10) < totals.total) {
+            calculateKembalian();
+            return;
         }
-    }
 
-    document.getElementById('form_transaksi').addEventListener('submit', function(e) {
-        e.preventDefault();
-        let total = parseInt(totalAmountInput.value) || 0;
-        let bayar = parseInt(payAmountInput.value) || 0;
-        let kembalian = bayar - total;
-
+        const paid = Number.parseInt(payAmountInput.value, 10) || 0;
+        const change = paid - totals.total;
         Swal.fire({
             title: 'Proses Pembayaran?',
-            html: `Tagihan: <b>Rp ${total.toLocaleString('id-ID')}</b><br>Diterima: <b>Rp ${bayar.toLocaleString('id-ID')}</b><br>Kembalian: <b style="color:var(--text-dark);">Rp ${kembalian.toLocaleString('id-ID')}</b>`,
+            html: `Subtotal: <b>Rp ${money(totals.subtotal)}</b><br>Diskon transaksi: <b>−Rp ${money(totals.orderDiscount)}</b><br>Total tagihan: <b>Rp ${money(totals.total)}</b><br>Diterima: <b>Rp ${money(paid)}</b><br>Kembalian: <b>Rp ${money(change)}</b>`,
             icon: 'info',
             showCancelButton: true,
             confirmButtonColor: 'var(--primary-color)',
@@ -326,7 +431,7 @@
             confirmButtonText: 'Konfirmasi',
             cancelButtonText: '<span style="color:var(--text-dark)">Batal</span>',
             customClass: { confirmButton: 'rounded-pill px-4', cancelButton: 'rounded-pill px-4' }
-        }).then((result) => {
+        }).then(result => {
             if (result.isConfirmed) this.submit();
         });
     });

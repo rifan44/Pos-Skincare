@@ -26,11 +26,11 @@
 
     <form action="{{ route('products.index') }}" method="GET" class="card border-0 shadow-sm rounded-4 p-3 p-lg-4 mb-4">
         <div class="row g-3 align-items-end">
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <label for="search" class="form-label small fw-bold text-muted">Cari Produk</label>
-                <input type="search" id="search" name="search" class="form-control bg-light" value="{{ request('search') }}" placeholder="Nama produk atau SKU">
+                <input type="search" id="search" name="search" class="form-control bg-light" value="{{ request('search') }}" placeholder="Nama, SKU, jenis, atau merek">
             </div>
-            <div class="col-md-5 col-lg-3">
+            <div class="col-md-6 col-lg-2">
                 <label for="category_id" class="form-label small fw-bold text-muted">Jenis Skincare</label>
                 <select id="category_id" name="category_id" class="form-select bg-light">
                     <option value="">Semua jenis</option>
@@ -39,7 +39,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-5 col-lg-3">
+            <div class="col-md-6 col-lg-2">
                 <label for="brand_id" class="form-label small fw-bold text-muted">Merek</label>
                 <select id="brand_id" name="brand_id" class="form-select bg-light">
                     <option value="">Semua merek</option>
@@ -48,7 +48,14 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2 col-lg-2 d-flex gap-2">
+            <div class="col-md-6 col-lg-2">
+                <label for="sort" class="form-label small fw-bold text-muted">Urutkan nama</label>
+                <select id="sort" name="sort" class="form-select bg-light">
+                    <option value="az" @selected(request('sort', 'az') === 'az')>A–Z</option>
+                    <option value="za" @selected(request('sort') === 'za')>Z–A</option>
+                </select>
+            </div>
+            <div class="col-md-6 col-lg-3 d-flex gap-2">
                 <button type="submit" class="btn btn-dark rounded-pill flex-grow-1">Filter</button>
                 <a href="{{ route('products.index') }}" class="btn btn-light border rounded-pill">Reset</a>
             </div>

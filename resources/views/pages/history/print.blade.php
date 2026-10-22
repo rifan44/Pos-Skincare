@@ -102,13 +102,29 @@
                 <tr>
                     <td>@ {{ number_format($detail->price, 0, ',', '.') }}</td>
                     <td class="text-center">x{{ $detail->quantity }}</td>
-                    <td class="text-right">{{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                    <td class="text-right">{{ number_format($detail->price * $detail->quantity, 0, ',', '.') }}</td>
                 </tr>
+                @if($detail->discount_amount > 0)
+                <tr>
+                    <td colspan="2">Diskon produk</td>
+                    <td class="text-right">-{{ number_format($detail->discount_amount, 0, ',', '.') }}</td>
+                </tr>
+                @endif
                 @endforeach
             </tbody>
         </table>
 
         <table>
+            <tr class="border-top">
+                <td>Subtotal setelah diskon produk</td>
+                <td class="text-right">{{ number_format($transaction->subtotal_amount, 0, ',', '.') }}</td>
+            </tr>
+            @if($transaction->discount_amount > 0)
+            <tr>
+                <td>Diskon transaksi</td>
+                <td class="text-right">-{{ number_format($transaction->discount_amount, 0, ',', '.') }}</td>
+            </tr>
+            @endif
             <tr class="border-top">
                 <td class="fw-bold" style="padding-top:5px;">TOTAL</td>
                 <td class="text-right fw-bold" style="padding-top:5px;">{{ number_format($transaction->total_amount, 0, ',', '.') }}</td>

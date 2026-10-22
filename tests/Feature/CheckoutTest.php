@@ -47,6 +47,99 @@ class CheckoutTest extends TestCase
         $this->assertSame(3, $product->fresh()->stock);
     }
 
+    public function test_checkout_applies_product_and_order_discounts_to_receipt_and_report(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $product = $this->createProduct(stock: 5);
+
+        $response = $this->actingAs($cashier)->from('/pos')->post(route('pos.store'), [
+            'cart_data' => json_encode([[
+                'id' => $product->id,
+                'qty' => 2,
+                'discount' => 5000,
+            ]]),
+            'discount_amount' => 2500,
+            'pay_amount' => 22500,
+        ]);
+
+        $transaction = Transaction::firstOrFail();
+        $detail = $transaction->details()->firstOrFail();
+
+        $response->assertRedirect(route('pos.index'))
+            ->assertSessionHas('print_id', $transaction->id);
+        $this->assertSame(25000, $transaction->subtotal_amount);
+        $this->assertSame(2500, $transaction->discount_amount);
+        $this->assertSame(22500, $transaction->total_amount);
+        $this->assertSame(5000, $detail->discount_amount);
+        $this->assertSame(22500, $detail->subtotal);
+        $this->assertSame(3, $product->fresh()->stock);
+
+        $this->actingAs($cashier)
+            ->get(route('history.print', $transaction))
+            ->assertOk()
+            ->assertSee('Diskon produk')
+            ->assertSee('Diskon transaksi')
+            ->assertSee('22.500');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin)
+            ->get(route('reports.index', [
+                'start_date' => now()->toDateString(),
+                'end_date' => now()->toDateString(),
+            ]))
+            ->assertOk()
+            ->assertSee('Rp 30.000')
+            ->assertSee('Rp 7.500')
+            ->assertSee('Rp 22.500')
+            ->assertSee('Rp 2.500');
+    }
+
+    public function test_discounts_cannot_exceed_the_product_or_cart_value(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $product = $this->createProduct(stock: 5);
+
+        $excessiveProductDiscount = $this->actingAs($cashier)->from('/pos')->post(route('pos.store'), [
+            'cart_data' => json_encode([['id' => $product->id, 'qty' => 1, 'discount' => 15001]]),
+            'pay_amount' => 0,
+        ]);
+        $excessiveProductDiscount->assertRedirect('/pos')->assertSessionHasErrors('cart_data');
+
+        $excessiveOrderDiscount = $this->actingAs($cashier)->from('/pos')->post(route('pos.store'), [
+            'cart_data' => json_encode([['id' => $product->id, 'qty' => 1, 'discount' => 1000]]),
+            'discount_amount' => 14001,
+            'pay_amount' => 0,
+        ]);
+        $excessiveOrderDiscount->assertRedirect('/pos')->assertSessionHasErrors('discount_amount');
+
+        $this->assertDatabaseCount('transactions', 0);
+        $this->assertSame(5, $product->fresh()->stock);
+    }
+
+    public function test_order_discount_is_allocated_across_lines_without_losing_rupiah(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $firstProduct = $this->createProduct(stock: 5);
+        $secondProduct = $this->createProduct(stock: 5);
+
+        $this->actingAs($cashier)->post(route('pos.store'), [
+            'cart_data' => json_encode([
+                ['id' => $firstProduct->id, 'qty' => 1, 'discount' => 0],
+                ['id' => $secondProduct->id, 'qty' => 1, 'discount' => 0],
+            ]),
+            'discount_amount' => 1,
+            'pay_amount' => 29999,
+        ])->assertRedirect(route('pos.index'));
+
+        $transaction = Transaction::firstOrFail();
+        $lineTotals = $transaction->details()->orderBy('id')->pluck('subtotal')->all();
+
+        $this->assertSame(30000, $transaction->subtotal_amount);
+        $this->assertSame(29999, $transaction->total_amount);
+        $this->assertSame([14999, 15000], $lineTotals);
+        $this->assertSame($transaction->total_amount, (int) array_sum($lineTotals));
+    }
+
     public function test_insufficient_stock_creates_no_transaction_and_does_not_change_stock(): void
     {
         $user = User::factory()->create(['role' => 'kasir']);
@@ -129,7 +222,7 @@ class CheckoutTest extends TestCase
 
         return Product::create([
             'category_id' => $category->id,
-            'sku' => 'SKU-' . $category->id,
+            'sku' => 'SKU-'.$category->id,
             'name' => 'Serum Test',
             'purchase_price' => 10000,
             'margin_percent' => 50,

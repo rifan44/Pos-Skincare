@@ -33,7 +33,7 @@
         <tbody>
             @foreach($transactionReturn->details as $detail)
             <tr>
-                <td>{{ $detail->transactionDetail->product->name ?? 'Produk tidak tersedia' }}<br><small>Stok kembali: {{ $detail->restocked_quantity }}</small></td>
+                <td>{{ $detail->transactionDetail->product->name ?? 'Produk tidak tersedia' }}<br><small>Nilai bersih baris struk: Rp {{ number_format($detail->transactionDetail->subtotal, 0, ',', '.') }} · stok kembali: {{ $detail->restocked_quantity }}</small></td>
                 <td class="right">{{ $detail->quantity }}</td>
                 <td class="right">{{ number_format($detail->refund_amount, 0, ',', '.') }}</td>
             </tr>

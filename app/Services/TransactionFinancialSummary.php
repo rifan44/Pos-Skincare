@@ -16,6 +16,7 @@ class TransactionFinancialSummary
 
         $summary = [
             'gross_omzet' => 0,
+            'total_discount' => 0,
             'total_refund' => 0,
             'total_omzet' => 0,
             'total_modal' => 0,
@@ -30,13 +31,16 @@ class TransactionFinancialSummary
         $daily = [];
 
         foreach ($transactions as $transaction) {
-            $omzet = (int) $transaction->total_amount;
+            $itemDiscount = (int) $transaction->details->sum('discount_amount');
+            $orderDiscount = (int) $transaction->discount_amount;
+            $grossOmzet = (int) $transaction->total_amount + $itemDiscount + $orderDiscount;
 
             $date = $transaction->created_at->toDateString();
             $daily[$date] ??= [
                 'date' => $date,
                 'total_transactions' => 0,
                 'total_items' => 0,
+                'discounts' => 0,
                 'refunds' => 0,
                 'total_refunds' => 0,
                 'returned_items' => 0,
@@ -46,7 +50,9 @@ class TransactionFinancialSummary
                 'hpp_belum_diketahui' => 0,
             ];
             $daily[$date]['total_transactions']++;
-            $daily[$date]['gross_omzet'] += $omzet;
+            $daily[$date]['gross_omzet'] += $grossOmzet;
+            $daily[$date]['discounts'] += $itemDiscount + $orderDiscount;
+            $summary['total_discount'] += $itemDiscount + $orderDiscount;
 
             foreach ($transaction->details as $detail) {
                 $quantity = (int) $detail->quantity;
@@ -57,6 +63,7 @@ class TransactionFinancialSummary
                 if ($hpp <= 0) {
                     $summary['hpp_belum_diketahui'] += $quantity;
                     $daily[$date]['hpp_belum_diketahui'] += $quantity;
+
                     continue;
                 }
 
@@ -75,6 +82,7 @@ class TransactionFinancialSummary
                 'date' => $date,
                 'total_transactions' => 0,
                 'total_items' => 0,
+                'discounts' => 0,
                 'refunds' => 0,
                 'total_refunds' => 0,
                 'returned_items' => 0,
@@ -98,6 +106,7 @@ class TransactionFinancialSummary
                 if ($hpp <= 0) {
                     $summary['hpp_belum_diketahui'] += $quantity;
                     $daily[$date]['hpp_belum_diketahui'] += $quantity;
+
                     continue;
                 }
 
@@ -110,9 +119,9 @@ class TransactionFinancialSummary
         }
 
         $summary['gross_omzet'] = collect($daily)->sum('gross_omzet');
-        $summary['total_omzet'] = $summary['gross_omzet'] - $summary['total_refund'];
+        $summary['total_omzet'] = $summary['gross_omzet'] - $summary['total_discount'] - $summary['total_refund'];
         foreach ($daily as &$row) {
-            $row['omzet'] = $row['gross_omzet'] - $row['refunds'];
+            $row['omzet'] = $row['gross_omzet'] - $row['discounts'] - $row['refunds'];
         }
         unset($row);
 

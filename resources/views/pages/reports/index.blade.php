@@ -8,7 +8,7 @@
     <div class="row align-items-end mb-4">
         <div class="col-sm-8">
             <h3 class="font-serif fw-bold text-dark mb-1">Laporan Penjualan dan Retur</h3>
-            <p class="text-muted mb-0" style="font-size: 0.95rem;">Omzet bersih dan estimasi laba kotor memperhitungkan refund pada tanggal pemrosesannya.</p>
+            <p class="text-muted mb-0" style="font-size: 0.95rem;">Omzet dan laba memperhitungkan diskon, HPP, serta refund pada tanggal pemrosesannya.</p>
         </div>
         <div class="col-sm-4 text-sm-end mt-3 mt-sm-0">
             @if(request('start_date'))
@@ -53,21 +53,28 @@
     </div>
     @endif
     <div class="row g-4 mb-4">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card border-0 shadow-sm rounded-4 p-4 h-100" style="background-color: var(--card-bg);">
                 <span class="fw-bold text-muted small text-uppercase mb-2 d-block" style="letter-spacing: 1px;">Omzet Kotor</span>
                 <h2 class="fw-extrabold text-dark mb-0 font-serif">Rp {{ number_format($grossOmzet, 0, ',', '.') }}</h2>
                 <small class="text-muted">{{ $totalItem }} unit terjual</small>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100" style="background-color: var(--bg-cream);">
+                <span class="fw-bold text-muted small text-uppercase mb-2 d-block" style="letter-spacing: 1px;">Diskon</span>
+                <h2 class="fw-extrabold text-dark mb-0 font-serif">Rp {{ number_format($totalDiskon, 0, ',', '.') }}</h2>
+                <small class="text-muted">Diskon produk dan transaksi</small>
+            </div>
+        </div>
+        <div class="col-md-3">
             <div class="card border-0 shadow-sm rounded-4 p-4 h-100" style="background-color: var(--bg-cream);">
                 <span class="fw-bold text-muted small text-uppercase mb-2 d-block" style="letter-spacing: 1px;">Refund</span>
                 <h2 class="fw-extrabold text-dark mb-0 font-serif">Rp {{ number_format($totalRefund, 0, ',', '.') }}</h2>
                 <small class="text-muted">Refund yang diproses pada periode ini</small>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card border-0 shadow-sm rounded-4 p-4 h-100" style="background-color: var(--card-bg);">
                 <span class="fw-bold text-muted small text-uppercase mb-2 d-block" style="letter-spacing: 1px;">Omzet Bersih</span>
                 <h2 class="fw-extrabold text-dark mb-0 font-serif">Rp {{ number_format($totalOmzet, 0, ',', '.') }}</h2>
@@ -99,6 +106,7 @@
                         <th width="15%" class="px-4 py-3 text-start">Tanggal</th>
                         <th class="px-4 py-3 text-center">Transaksi</th>
                         <th class="px-4 py-3 text-center">Terjual / Retur</th>
+                        <th class="px-4 py-3 text-end">Diskon</th>
                         <th class="px-4 py-3 text-end">Refund</th>
                         <th class="px-4 py-3 text-end">HPP Bersih</th>
                         <th class="px-4 py-3 text-end">Omzet Bersih</th>
@@ -111,6 +119,7 @@
                         <td class="px-4 py-3 fw-bold text-dark text-start">{{ \Carbon\Carbon::parse($report['date'])->format('d M Y') }}</td>
                         <td class="px-4 py-3 text-center text-muted">{{ $report['total_transactions'] }} struk / {{ $report['total_refunds'] }} refund</td>
                         <td class="px-4 py-3 text-center text-muted">{{ $report['total_items'] }} / {{ $report['returned_items'] }} unit</td>
+                        <td class="px-4 py-3 text-end text-muted">Rp {{ number_format($report['discounts'], 0, ',', '.') }}</td>
                         <td class="px-4 py-3 text-end text-muted">Rp {{ number_format($report['refunds'], 0, ',', '.') }}</td>
                         <td class="px-4 py-3 text-end text-muted">Rp {{ number_format($report['modal'], 0, ',', '.') }}</td>
                         <td class="px-4 py-3 fw-bold text-dark text-end">Rp {{ number_format($report['omzet'], 0, ',', '.') }}</td>
@@ -118,7 +127,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-5 fw-medium">Belum ada transaksi atau retur pada periode ini.</td>
+                        <td colspan="8" class="text-center text-muted py-5 fw-medium">Belum ada transaksi atau retur pada periode ini.</td>
                     </tr>
                     @endforelse
                 </tbody>

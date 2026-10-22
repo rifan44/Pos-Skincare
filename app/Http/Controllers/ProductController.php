@@ -18,6 +18,7 @@ class ProductController extends Controller
             'search' => 'nullable|string|max:255',
             'category_id' => 'nullable|integer',
             'brand_id' => 'nullable|integer',
+            'sort' => 'nullable|in:az,za',
         ]);
 
         $query = Product::with(['category', 'brand']);
@@ -34,11 +35,14 @@ class ProductController extends Controller
             $search = $filters['search'];
             $query->where(function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%");
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhereHas('category', fn ($categoryQuery) => $categoryQuery->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('brand', fn ($brandQuery) => $brandQuery->where('name', 'like', "%{$search}%"));
             });
         }
 
-        $products = $query->orderBy('name')->get();
+        $sortDirection = ($filters['sort'] ?? 'az') === 'za' ? 'desc' : 'asc';
+        $products = $query->orderBy('name', $sortDirection)->get();
         $categories = Category::where('category_type', 'jenis')->orderBy('name')->get();
         $brands = Category::where('category_type', 'merek')->orderBy('name')->get();
 

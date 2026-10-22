@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class TransactionDetail extends Model
 {
     protected $fillable = [
-        'transaction_id', 'product_id', 'quantity', 'price', 'hpp', 'subtotal'
+        'transaction_id', 'product_id', 'quantity', 'price', 'discount_amount', 'hpp', 'subtotal',
     ];
 
     // Relasi ke tabel products (yang sudah ada)

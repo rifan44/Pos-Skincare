@@ -64,6 +64,58 @@ class TransactionReturnTest extends TestCase
             ->assertSee('Rp 10.000');
     }
 
+    public function test_returns_refund_the_discounted_amount_paid_for_each_unit(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $category = Category::create(['name' => 'Serum']);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Serum Diskon',
+            'purchase_price' => 5000,
+            'margin_percent' => 100,
+            'selling_price' => 10000,
+            'stock' => 0,
+        ]);
+        $transaction = Transaction::create([
+            'subtotal_amount' => 18001,
+            'discount_amount' => 1000,
+            'total_amount' => 17001,
+            'pay_amount' => 20000,
+        ]);
+        $detail = TransactionDetail::create([
+            'transaction_id' => $transaction->id,
+            'product_id' => $product->id,
+            'quantity' => 2,
+            'price' => 10000,
+            'discount_amount' => 1999,
+            'hpp' => 5000,
+            'subtotal' => 17001,
+        ]);
+
+        $firstReturn = $this->actingAs($admin)->post(route('history.returns.store', $transaction), [
+            'reason' => 'Satu barang tidak sesuai',
+            'refund_method' => 'cash',
+            'items' => [$detail->id => ['quantity' => 1, 'restocked_quantity' => 1]],
+        ]);
+
+        $firstReturn->assertRedirect(route('history.returns.index', $transaction));
+        $this->assertSame(8501, TransactionReturn::firstOrFail()->total_amount);
+        $this->assertSame(1, $product->fresh()->stock);
+
+        $this->actingAs($admin)->post(route('history.returns.store', $transaction), [
+            'reason' => 'Barang kedua dikembalikan',
+            'refund_method' => 'cash',
+            'items' => [$detail->id => ['quantity' => 1, 'restocked_quantity' => 0]],
+        ])->assertRedirect(route('history.returns.index', $transaction));
+
+        $this->assertSame(17001, (int) TransactionReturn::where('transaction_id', $transaction->id)->sum('total_amount'));
+        $this->assertSame([8501, 8500], TransactionReturn::where('transaction_id', $transaction->id)
+            ->orderBy('id')
+            ->pluck('total_amount')
+            ->all());
+        $this->assertSame('refunded', $transaction->fresh()->return_status);
+    }
+
     public function test_return_quantity_cannot_exceed_the_unreturned_quantity(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -83,7 +135,7 @@ class TransactionReturnTest extends TestCase
             ]);
 
         $rejected->assertRedirect(route('history.returns.index', $transaction))
-            ->assertSessionHasErrors('items.' . $detail->id . '.quantity');
+            ->assertSessionHasErrors('items.'.$detail->id.'.quantity');
         $this->assertDatabaseCount('transaction_returns', 1);
         $this->assertSame(2, $product->fresh()->stock);
     }
@@ -101,7 +153,7 @@ class TransactionReturnTest extends TestCase
             ]);
 
         $response->assertRedirect(route('history.returns.index', $transaction))
-            ->assertSessionHasErrors('items.' . $detail->id . '.restocked_quantity');
+            ->assertSessionHasErrors('items.'.$detail->id.'.restocked_quantity');
         $this->assertDatabaseCount('transaction_returns', 0);
         $this->assertSame(2, $product->fresh()->stock);
     }

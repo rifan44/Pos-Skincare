@@ -41,6 +41,9 @@ class CatalogManagementTest extends TestCase
             ->get(route('categories.index'))
             ->assertOk()
             ->assertSee('Jenis Skincare')
+            ->assertSee('Merek Skincare')
+            ->assertSee('data-category-search', false)
+            ->assertSee('data-category-sort', false)
             ->assertSee('Toner');
 
         $this->actingAs($admin)->delete(route('categories.destroy', $category))
@@ -178,6 +181,21 @@ class CatalogManagementTest extends TestCase
             ->assertDontSee('Sunscreen Kahf');
     }
 
+    public function test_admin_product_search_matches_brand_and_supports_reverse_sorting(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $serum = Category::create(['name' => 'Serum', 'category_type' => 'jenis']);
+        $brand = Category::create(['name' => 'Kahf', 'category_type' => 'merek']);
+        $this->createCatalogProduct($serum, $brand, 'Alpha Serum');
+        $this->createCatalogProduct($serum, $brand, 'Zeta Serum');
+
+        $this->actingAs($admin)
+            ->get(route('products.index', ['search' => 'Kahf', 'sort' => 'za']))
+            ->assertOk()
+            ->assertSeeInOrder(['Zeta Serum', 'Alpha Serum'])
+            ->assertSee('value="za" selected', false);
+    }
+
     public function test_product_category_fields_reject_categories_from_the_wrong_group(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -217,6 +235,8 @@ class CatalogManagementTest extends TestCase
             ->assertOk()
             ->assertSee('id="category_filter"', false)
             ->assertSee('id="brand_filter"', false)
+            ->assertSee('id="sort_products"', false)
+            ->assertSee('id="order_discount_input"', false)
             ->assertSee('Serum Kahf')
             ->assertSee('Kahf');
     }
