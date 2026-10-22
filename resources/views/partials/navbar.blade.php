@@ -45,10 +45,10 @@
                         <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ request()->routeIs('history.*') ? 'fw-bold' : '' }}" style="{{ request()->routeIs('history.*') ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('history.index') }}">Riwayat</a></li>
                     @else
                         <!-- Menu Khusus Tamu (Guest) -->
-                        <li class="nav-item"><a class="nav-link fw-bold px-3 py-2 hover-primary" href="{{ route('landing') }}" data-bs-dismiss="offcanvas" style="color: var(--text-dark);">Beranda</a></li>
-                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="{{ route('landing') . '#features' }}" data-bs-dismiss="offcanvas" style="color: var(--text-muted);">Fitur Utama</a></li>
-                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="{{ route('landing') . '#about' }}" data-bs-dismiss="offcanvas" style="color: var(--text-muted);">Tentang Kami</a></li>
-                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="{{ route('landing') . '#contact' }}" data-bs-dismiss="offcanvas" style="color: var(--text-muted);">Kontak</a></li>
+                        <li class="nav-item"><a class="nav-link fw-bold px-3 py-2 hover-primary" href="{{ route('landing') }}" data-nav-link style="color: var(--text-dark);">Beranda</a></li>
+                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="{{ route('landing') . '#features' }}" data-nav-link style="color: var(--text-muted);">Fitur Utama</a></li>
+                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="{{ route('landing') . '#about' }}" data-nav-link style="color: var(--text-muted);">Tentang Kami</a></li>
+                        <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 hover-primary" href="{{ route('landing') . '#contact' }}" data-nav-link style="color: var(--text-muted);">Kontak</a></li>
                     @endauth
                 </ul>
                 

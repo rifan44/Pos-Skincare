@@ -26,8 +26,11 @@ class LandingPageTest extends TestCase
             ->assertSee(route('landing').'#about', false)
             ->assertSee(route('landing').'#contact', false)
             ->assertSee('tel:+6281234567890', false)
+            ->assertSee('data-nav-link', false)
+            ->assertSee('hidden.bs.offcanvas', false)
             ->assertSee('Jl. Mawar 10')
             ->assertDontSee('href="#"', false)
+            ->assertDontSee('href="'.route('landing').'#features" data-bs-dismiss="offcanvas"', false)
             ->assertDontSee('halo@skincarepos.com')
             ->assertDontSee('Kirim Pesan');
     }
