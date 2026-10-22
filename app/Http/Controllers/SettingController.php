@@ -28,7 +28,7 @@ class SettingController extends Controller
     {
         $setting = Setting::first();
 
-        $request->validate([
+        $validated = $request->validate([
             'store_name' => 'required|string|max:255',
             'store_address' => 'required|string',
             'store_phone' => 'required|string|max:20',
@@ -39,14 +39,27 @@ class SettingController extends Controller
             'primary_color' => 'required|string|max:7',
             'font_family' => 'required|string',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'landing_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:8192', 'dimensions:min_width=1200,min_height=800'],
-            'about_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:8192', 'dimensions:min_width=1200,min_height=800'],
+            'landing_image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,bmp|max:8192',
+            'social_links' => 'nullable|array|max:10',
+            'social_links.*' => 'array:name,url',
+            'social_links.*.name' => 'nullable|string|max:40',
+            'social_links.*.url' => 'nullable|url:http,https|max:255',
         ], [
-            'landing_image.dimensions' => 'Gambar utama landing page harus berukuran minimal 1200 × 800 piksel.',
-            'about_image.dimensions' => 'Gambar section Tentang harus berukuran minimal 1200 × 800 piksel.',
+            'landing_image.image' => 'File gambar utama harus berupa gambar yang valid.',
+            'landing_image.mimes' => 'Format gambar utama harus JPG, PNG, WebP, GIF, atau BMP.',
+            'social_links.max' => 'Maksimal 10 tautan media sosial yang dapat ditambahkan.',
+            'social_links.*.url.url' => 'Tautan media sosial harus menggunakan URL HTTP atau HTTPS yang valid.',
         ]);
 
-        $data = $request->except(['logo', 'landing_image', 'about_image']);
+        $data = $request->except(['logo', 'landing_image', 'about_image', 'social_links']);
+        $data['social_links'] = collect($validated['social_links'] ?? [])
+            ->map(fn (array $link) => [
+                'name' => trim($link['name'] ?? ''),
+                'url' => trim($link['url'] ?? ''),
+            ])
+            ->filter(fn (array $link) => $link['name'] !== '' && $link['url'] !== '')
+            ->values()
+            ->all();
 
         // Handle Upload Logo Bulat Navbar
         if ($request->hasFile('logo')) {
@@ -58,11 +71,6 @@ class SettingController extends Controller
         if ($request->hasFile('landing_image')) {
             $landingPath = $request->file('landing_image')->store('settings', 'public');
             $data['landing_image'] = $landingPath;
-        }
-
-        if ($request->hasFile('about_image')) {
-            $aboutPath = $request->file('about_image')->store('settings', 'public');
-            $data['about_image'] = $aboutPath;
         }
 
         $setting ??= new Setting;

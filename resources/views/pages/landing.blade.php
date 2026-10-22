@@ -3,8 +3,23 @@
 @section('content')
 @php
     $appSetting = \App\Models\Setting::first();
-    $contactPhone = $appSetting->store_phone ?? null;
-    $contactPhoneHref = preg_replace('/[^0-9+]/', '', $contactPhone ?? '');
+    $contactPhone = trim((string) ($appSetting?->store_phone ?? ''));
+    $whatsappNumber = preg_replace('/\D+/', '', $contactPhone);
+
+    if (str_starts_with($whatsappNumber, '00')) {
+        $whatsappNumber = substr($whatsappNumber, 2);
+    } elseif (!str_starts_with($contactPhone, '+')) {
+        if (str_starts_with($whatsappNumber, '0')) {
+            $whatsappNumber = '62'.substr($whatsappNumber, 1);
+        } elseif (!str_starts_with($whatsappNumber, '62')) {
+            $whatsappNumber = '62'.$whatsappNumber;
+        }
+    }
+
+    $whatsappUrl = preg_match('/^[1-9]\d{5,14}$/', $whatsappNumber)
+        ? 'https://wa.me/'.$whatsappNumber
+        : null;
+    $socialLinks = $appSetting?->social_links ?? [];
 @endphp
 
 <style>
@@ -37,20 +52,19 @@
         font-weight: 500;
         letter-spacing: -1px;
     }
-    .landing-image-frame {
-        position: relative;
+    .hero-image-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
         width: 100%;
-        aspect-ratio: 4 / 3;
-        overflow: hidden;
-        background-color: #f0e9e4;
     }
-    .landing-image-frame img {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center;
+    .hero-image-container img {
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        max-height: 500px;
+        object-fit: contain;
     }
     .btn-hero {
         background-color: var(--primary-color);
@@ -156,11 +170,11 @@
             
             <div class="col-lg-6 text-center">
                 @if($appSetting && $appSetting->landing_image)
-                    <div class="landing-image-frame rounded-4 shadow">
-                        <img src="{{ asset('storage/' . $appSetting->landing_image) }}" class="hero-image" alt="Tampilan {{ $appSetting->store_name ?? 'toko skincare' }}" fetchpriority="high">
+                    <div class="hero-image-container">
+                        <img src="{{ asset('storage/' . $appSetting->landing_image) }}" class="hero-image rounded-4 shadow" alt="Tampilan {{ $appSetting->store_name ?? 'toko skincare' }}" fetchpriority="high">
                     </div>
                 @else
-                    <div class="landing-image-frame rounded-4 d-flex align-items-center justify-content-center shadow-sm">
+                    <div class="rounded-4 d-flex align-items-center justify-content-center w-100" style="background-color: #f0e9e4; min-height: 320px;">
                         <i class="fas fa-spa" style="font-size: 6rem; color: #fff;"></i>
                     </div>
                 @endif
@@ -199,8 +213,8 @@
 
 <!-- SECTION 2: TENTANG KAMI -->
 <div class="container px-4 px-lg-5 mb-5 pb-5" id="about">
-    <div class="row align-items-center g-5">
-        <div class="col-lg-6 order-2 order-lg-1">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8 text-center">
             <h2 class="font-serif fw-bold text-dark mb-4">Mendukung Pertumbuhan Bisnis Kecantikan Anda</h2>
             <p class="text-muted mb-4" style="font-size: 1.1rem; line-height: 1.8;">
                 <strong>{{ $appSetting->store_name ?? 'Skincare POS' }}</strong> membantu toko skincare mencatat penjualan dan mengelola stok produk dalam satu alur kerja.
@@ -208,7 +222,7 @@
             <p class="text-muted mb-4" style="font-size: 1.1rem; line-height: 1.8;">
                 Data transaksi menyimpan harga dan HPP saat penjualan dibuat, sehingga ringkasan penjualan dapat ditelusuri kembali dari riwayat transaksi.
             </p>
-            <div class="d-flex gap-4 mt-4">
+            <div class="d-flex justify-content-center gap-4 mt-4">
                 <div class="text-center">
                     <h3 class="font-serif fw-bold mb-0" style="color: var(--primary-color);"><i class="fas fa-cash-register" aria-hidden="true"></i></h3>
                     <span class="small fw-bold text-muted text-uppercase">Kasir</span>
@@ -216,18 +230,6 @@
                 <div class="text-center">
                     <h3 class="font-serif fw-bold mb-0" style="color: var(--primary-color);"><i class="fas fa-boxes-stacked" aria-hidden="true"></i></h3>
                     <span class="small fw-bold text-muted text-uppercase">Stok</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6 order-1 order-lg-2">
-            <div class="position-relative">
-                <div class="rounded-4" aria-hidden="true" style="background-color: var(--primary-color); opacity: 0.15; width: 100%; height: 100%; position: absolute; top: 20px; left: -20px; z-index: 1;"></div>
-                <div class="landing-image-frame rounded-4 d-flex align-items-center justify-content-center position-relative shadow-sm" style="border: 1px solid var(--border-color); z-index: 2;">
-                    @if($appSetting?->about_image)
-                        <img src="{{ asset('storage/' . $appSetting->about_image) }}" class="about-image" alt="Tentang {{ $appSetting->store_name ?? 'Skincare POS' }}" loading="lazy" decoding="async">
-                    @else
-                        <i class="fas fa-pump-soap" aria-hidden="true" style="font-size: 8rem; color: var(--primary-color); opacity: 0.3;"></i>
-                    @endif
                 </div>
             </div>
         </div>
@@ -244,13 +246,15 @@
                 <p class="mb-5 opacity-75" style="line-height: 1.8;">Informasi kontak di bagian ini mengikuti data toko yang diatur oleh admin.</p>
                 
                 <div class="d-flex align-items-start gap-3 mb-4">
-                    <i class="fas fa-phone mt-1 fs-5" aria-hidden="true"></i>
+                    <i class="fa-brands fa-whatsapp mt-1 fs-5" aria-hidden="true"></i>
                     <div>
-                        <span class="d-block fw-bold small text-uppercase opacity-75 mb-1">Telepon</span>
-                        @if($contactPhone)
-                            <a class="text-white" href="tel:{{ $contactPhoneHref }}">{{ $contactPhone }}</a>
+                        <span class="d-block fw-bold small text-uppercase opacity-75 mb-1">WhatsApp</span>
+                        @if($whatsappUrl)
+                            <a class="text-white" href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer">{{ $contactPhone }}</a>
+                        @elseif($contactPhone)
+                            <span>{{ $contactPhone }} (format nomor WhatsApp tidak valid)</span>
                         @else
-                            <span>Nomor telepon belum diatur.</span>
+                            <span>Nomor WhatsApp belum diatur.</span>
                         @endif
                     </div>
                 </div>
@@ -267,12 +271,12 @@
             <div class="col-lg-7 p-5">
                 <h4 class="font-serif fw-bold text-dark mb-3">Butuh bantuan?</h4>
                 <p class="text-muted mb-4" style="font-size: 1.05rem; line-height: 1.8;">
-                    Hubungi toko melalui nomor telepon yang tercantum. Untuk menggunakan kasir atau mengelola toko, masuk dengan akun yang sudah dibuat admin.
+                    Hubungi toko melalui WhatsApp. Untuk menggunakan kasir atau mengelola toko, masuk dengan akun yang sudah dibuat admin.
                 </p>
                 <div class="d-flex flex-wrap gap-3">
-                    @if($contactPhone)
-                        <a href="tel:{{ $contactPhoneHref }}" class="btn btn-dark rounded-pill px-4">
-                            <i class="fas fa-phone me-2" aria-hidden="true"></i>Telepon Toko
+                    @if($whatsappUrl)
+                        <a href="{{ $whatsappUrl }}" class="btn btn-dark rounded-pill px-4" target="_blank" rel="noopener noreferrer">
+                            <i class="fa-brands fa-whatsapp me-2" aria-hidden="true"></i>Chat WhatsApp
                         </a>
                     @endif
                     @auth
@@ -285,6 +289,29 @@
                         <a href="{{ route('login') }}" class="btn btn-light border rounded-pill px-4">Masuk Sistem</a>
                     @endauth
                 </div>
+
+                @if(count($socialLinks))
+                    <div class="mt-4">
+                        <span class="d-block small fw-bold text-muted text-uppercase mb-2">Ikuti Media Sosial Kami</span>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach($socialLinks as $socialLink)
+                                @php
+                                    $socialName = $socialLink['name'] ?? 'Media Sosial';
+                                    $socialIcon = match (strtolower($socialName)) {
+                                        'instagram' => 'fa-brands fa-instagram',
+                                        'tiktok', 'tik tok' => 'fa-brands fa-tiktok',
+                                        'facebook' => 'fa-brands fa-facebook',
+                                        'youtube' => 'fa-brands fa-youtube',
+                                        default => 'fas fa-link',
+                                    };
+                                @endphp
+                                <a href="{{ $socialLink['url'] }}" class="btn btn-outline-dark rounded-pill px-3" target="_blank" rel="noopener noreferrer" aria-label="{{ $socialName }}">
+                                    <i class="{{ $socialIcon }} me-2" aria-hidden="true"></i>{{ $socialName }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

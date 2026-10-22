@@ -107,22 +107,62 @@
                                     <img src="{{ asset('storage/' . $setting->landing_image) }}" alt="Pratinjau gambar utama landing page">
                                 </div>
                             @endif
-                            <input type="file" name="landing_image" class="form-control bg-light" accept="image/jpeg,image/png,image/webp">
-                            <div class="form-text">Minimal 1200 × 800 piksel, maksimal 8 MB. Gunakan gambar resolusi tinggi agar tetap tajam.</div>
+                            <input type="file" name="landing_image" class="form-control bg-light" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp">
+                            <div class="form-text">JPG, PNG, WebP, GIF, atau BMP, maksimal 8 MB. Gambar kecil tidak akan diperbesar agar tidak tampak pecah.</div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="fw-bold small text-muted mb-2">Gambar Section Tentang</label>
-                            @if($setting->about_image)
-                                <div class="landing-image-preview rounded-3 border mb-2">
-                                    <img src="{{ asset('storage/' . $setting->about_image) }}" alt="Pratinjau gambar section Tentang">
-                                </div>
-                            @endif
-                            <input type="file" name="about_image" class="form-control bg-light" accept="image/jpeg,image/png,image/webp">
-                            <div class="form-text">Minimal 1200 × 800 piksel, maksimal 8 MB. Gunakan gambar resolusi tinggi agar tetap tajam.</div>
+
+                        @php($socialLinks = old('social_links', $setting->social_links ?? []))
+                        <div class="col-12">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                <label class="fw-bold small text-muted mb-0">Media Sosial di Bagian Kontak</label>
+                                <button type="button" class="btn btn-outline-dark btn-sm rounded-pill" id="addSocialLink">
+                                    <i class="fas fa-plus me-1" aria-hidden="true"></i>Tambah Media Sosial
+                                </button>
+                            </div>
+                            <p class="form-text mt-0">Tambahkan nama platform dan tautan profil, misalnya Instagram atau TikTok. Maksimal 10 tautan.</p>
+                            <div id="socialLinksList" class="d-grid gap-3">
+                                @forelse($socialLinks as $index => $socialLink)
+                                    <div class="row g-2 align-items-end social-link-row" data-social-link-row>
+                                        <div class="col-md-5">
+                                            <label class="form-label small" for="social-links-{{ $index }}-name">Nama platform</label>
+                                            <input type="text" id="social-links-{{ $index }}-name" name="social_links[{{ $index }}][name]" class="form-control bg-light" value="{{ $socialLink['name'] ?? '' }}" maxlength="40" placeholder="Instagram, TikTok, ...">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small" for="social-links-{{ $index }}-url">Tautan profil</label>
+                                            <input type="url" id="social-links-{{ $index }}-url" name="social_links[{{ $index }}][url]" class="form-control bg-light" value="{{ $socialLink['url'] ?? '' }}" maxlength="255" placeholder="https://...">
+                                        </div>
+                                        <div class="col-md-1 d-grid">
+                                            <button type="button" class="btn btn-outline-danger rounded-pill" data-remove-social-link aria-label="Hapus tautan media sosial">
+                                                <i class="fas fa-trash" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="small text-muted mb-0" data-social-links-empty>Belum ada tautan media sosial.</p>
+                                @endforelse
+                            </div>
                         </div>
                         <!-- Font Family Dropdown disembunyikan agar dipaksa pakai Serif Premium Global -->
                         <input type="hidden" name="font_family" value="Playfair Display">
                     </div>
+
+                    <template id="socialLinkTemplate">
+                        <div class="row g-2 align-items-end social-link-row" data-social-link-row>
+                            <div class="col-md-5">
+                                <label class="form-label small" for="social-links-__INDEX__-name">Nama platform</label>
+                                <input type="text" id="social-links-__INDEX__-name" name="social_links[__INDEX__][name]" class="form-control bg-light" maxlength="40" placeholder="Instagram, TikTok, ...">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small" for="social-links-__INDEX__-url">Tautan profil</label>
+                                <input type="url" id="social-links-__INDEX__-url" name="social_links[__INDEX__][url]" class="form-control bg-light" maxlength="255" placeholder="https://...">
+                            </div>
+                            <div class="col-md-1 d-grid">
+                                <button type="button" class="btn btn-outline-danger rounded-pill" data-remove-social-link aria-label="Hapus tautan media sosial">
+                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- TAB 3: STRUK -->
@@ -135,8 +175,9 @@
                             <textarea name="store_address" class="form-control bg-light" rows="2" required>{{ $setting->store_address }}</textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="fw-bold small text-muted mb-2">Nomor Telepon / WhatsApp</label>
-                            <input type="text" name="store_phone" class="form-control bg-light" value="{{ $setting->store_phone }}" required>
+                            <label class="fw-bold small text-muted mb-2">Nomor WhatsApp Toko</label>
+                            <input type="tel" inputmode="tel" name="store_phone" class="form-control bg-light" value="{{ $setting->store_phone }}" required>
+                            <div class="form-text">Nomor Indonesia seperti 0812... otomatis disesuaikan. Untuk nomor negara lain, gunakan awalan +, misalnya +1...</div>
                         </div>
                         <div class="col-md-6">
                             <label class="fw-bold small text-muted mb-2">Pesan Penutup (Footer)</label>
@@ -160,19 +201,20 @@
 <!-- Tambahkan sedikit JS agar Tab Active mewarisi warna primer -->
 <style>
     .landing-image-preview {
-        position: relative;
-        aspect-ratio: 4 / 3;
-        max-width: 360px;
-        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        max-width: 500px;
+        padding: 0.5rem;
         background-color: var(--bg-cream);
     }
 
     .landing-image-preview img {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        max-height: 300px;
+        object-fit: contain;
     }
 
     .nav-pills .nav-link.active {
@@ -181,4 +223,48 @@
         color: #fff !important;
     }
 </style>
+
+<script>
+    (() => {
+        const list = document.getElementById('socialLinksList');
+        const template = document.getElementById('socialLinkTemplate');
+        const addButton = document.getElementById('addSocialLink');
+        if (!list || !template || !addButton) return;
+
+        let nextIndex = 0;
+        list.querySelectorAll('input[name^="social_links["]').forEach((input) => {
+            const match = input.name.match(/^social_links\[(\d+)\]/);
+            if (match) nextIndex = Math.max(nextIndex, Number(match[1]) + 1);
+        });
+        const setAddButtonState = () => {
+            addButton.disabled = list.querySelectorAll('[data-social-link-row]').length >= 10;
+        };
+
+        addButton.addEventListener('click', () => {
+            if (list.querySelectorAll('[data-social-link-row]').length >= 10) return;
+
+            list.querySelector('[data-social-links-empty]')?.remove();
+            const row = template.innerHTML.replaceAll('__INDEX__', String(nextIndex++));
+            list.insertAdjacentHTML('beforeend', row);
+            setAddButtonState();
+        });
+
+        list.addEventListener('click', (event) => {
+            const removeButton = event.target.closest('[data-remove-social-link]');
+            if (!removeButton) return;
+
+            removeButton.closest('[data-social-link-row]')?.remove();
+            if (list.querySelectorAll('[data-social-link-row]').length === 0) {
+                const emptyState = document.createElement('p');
+                emptyState.className = 'small text-muted mb-0';
+                emptyState.dataset.socialLinksEmpty = '';
+                emptyState.textContent = 'Belum ada tautan media sosial.';
+                list.appendChild(emptyState);
+            }
+            setAddButtonState();
+        });
+
+        setAddButtonState();
+    })();
+</script>
 @endsection

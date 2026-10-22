@@ -25,7 +25,10 @@ class LandingPageTest extends TestCase
             ->assertSee(route('landing').'#features', false)
             ->assertSee(route('landing').'#about', false)
             ->assertSee(route('landing').'#contact', false)
-            ->assertSee('tel:+6281234567890', false)
+            ->assertSee('https://wa.me/6281234567890', false)
+            ->assertDontSee('href="tel:', false)
+            ->assertSee('Hubungi Toko')
+            ->assertSee('Chat WhatsApp')
             ->assertSee('data-nav-link', false)
             ->assertSee('hidden.bs.offcanvas', false)
             ->assertSee('Jl. Mawar 10')
@@ -46,18 +49,39 @@ class LandingPageTest extends TestCase
             ->assertDontSee(route('dashboard.index'), false);
     }
 
-    public function test_landing_page_renders_the_configured_about_image(): void
+    public function test_landing_page_shows_custom_social_links_without_an_about_image_space(): void
     {
         Setting::create([
             'store_name' => 'Test Skincare',
-            'about_image' => 'settings/about.jpg',
+            'store_phone' => '081234567890',
+            'social_links' => [
+                ['name' => 'Instagram', 'url' => 'https://instagram.com/test-skincare'],
+                ['name' => 'TikTok', 'url' => 'https://www.tiktok.com/@test-skincare'],
+            ],
         ]);
 
         $response = $this->get(route('landing'));
 
         $response->assertOk()
-            ->assertSee(asset('storage/settings/about.jpg'), false)
-            ->assertSee('alt="Tentang Test Skincare"', false);
+            ->assertSee('https://wa.me/6281234567890', false)
+            ->assertSee('https://instagram.com/test-skincare', false)
+            ->assertSee('https://www.tiktok.com/@test-skincare', false)
+            ->assertSee('fa-instagram', false)
+            ->assertSee('fa-tiktok', false)
+            ->assertDontSee('fa-pump-soap', false)
+            ->assertDontSee('landing-image-frame', false);
+    }
+
+    public function test_whatsapp_contact_preserves_an_international_country_code(): void
+    {
+        Setting::create([
+            'store_name' => 'Test Skincare',
+            'store_phone' => '+1 (415) 555-0123',
+        ]);
+
+        $this->get(route('landing'))
+            ->assertOk()
+            ->assertSee('https://wa.me/14155550123', false);
     }
 
     public function test_history_title_stays_at_the_top_of_its_page_header(): void
