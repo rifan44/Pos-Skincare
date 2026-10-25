@@ -21,7 +21,7 @@
         </div>
     </div>
 
-    @if($errors->any())
+    @if(isset($errors) && $errors->any())
     <div class="alert alert-danger border-0 shadow-sm rounded-4" role="alert">
         <ul class="mb-0 ps-3">
             @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
