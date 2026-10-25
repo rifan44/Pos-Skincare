@@ -53,7 +53,7 @@
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 table-scrollable">
                 <thead class="table-light">
                     <tr>
                         <th width="5%" class="px-4 py-3 text-center">No</th>

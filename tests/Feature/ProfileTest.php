@@ -18,7 +18,14 @@ class ProfileTest extends TestCase
             ->actingAs($user)
             ->get('/profile');
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertSee('Profil Akun')
+            ->assertSee('update_password_current_password', false)
+            ->assertSee(route('profile.update'), false)
+            ->assertSee(route('password.update'), false)
+            ->assertSee(route('profile.destroy'), false)
+            ->assertSee(route('profile.edit'), false)
+            ->assertSee('data-theme-toggle', false);
     }
 
     public function test_profile_information_can_be_updated(): void
@@ -109,5 +116,10 @@ class ProfileTest extends TestCase
             ->assertSessionHasErrorsIn('userDeletion', 'password');
         $this->assertAuthenticatedAs($admin);
         $this->assertNotNull($admin->fresh());
+
+        $this->actingAs($admin)
+            ->get('/profile')
+            ->assertOk()
+            ->assertDontSee('data-bs-target="#confirmAccountDeletion"', false);
     }
 }

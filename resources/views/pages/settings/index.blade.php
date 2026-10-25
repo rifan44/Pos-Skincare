@@ -77,7 +77,7 @@
                                 @if($setting->logo)
                                     <img src="{{ asset('storage/' . $setting->logo) }}" class="rounded-circle border" width="50" height="50" style="object-fit: cover;">
                                 @endif
-                                <input type="file" name="logo" class="form-control bg-light w-auto flex-grow-1" accept="image/*">
+                                <input type="file" name="logo" class="form-control bg-light w-auto flex-grow-1 setting-logo-input" accept="image/*">
                             </div>
                         </div>
                     </div>
@@ -104,11 +104,18 @@
                             <label class="fw-bold small text-muted mb-2">Gambar Utama / Hero</label>
                             @if($setting->landing_image)
                                 <div class="landing-image-preview rounded-3 border mb-2">
-                                    <img src="{{ asset('storage/' . $setting->landing_image) }}" alt="Pratinjau gambar utama landing page">
+                                    <img src="{{ asset('storage/' . $setting->landing_image) }}" alt="Pratinjau gambar utama landing page" data-landing-image-preview>
                                 </div>
                             @endif
-                            <input type="file" name="landing_image" class="form-control bg-light" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp">
-                            <div class="form-text">JPG, PNG, WebP, GIF, atau BMP, maksimal 8 MB. Gambar kecil tidak akan diperbesar agar tidak tampak pecah.</div>
+                            <input type="file" id="landingImageInput" name="landing_image" class="form-control bg-light" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp">
+                            <div class="form-text">JPG, PNG, WebP, GIF, atau BMP, maksimal 8 MB. Gunakan gambar sumber dengan sisi terpanjang minimal 1400 px (ideal 1600 px atau lebih); untuk rasio 3:2, sekitar 1600 × 1067 px. Gambar ditampilkan proporsional dan tidak di-upscale; resolusi sumber rendah dapat terlihat pecah, terutama di layar berkepadatan tinggi.</div>
+                            <div class="form-text" id="landingImageResolution" aria-live="polite">
+                                @if($setting->landing_image)
+                                    Resolusi gambar saat ini akan ditampilkan setelah dimuat.
+                                @else
+                                    Pilih gambar untuk memeriksa resolusinya sebelum menyimpan.
+                                @endif
+                            </div>
                         </div>
 
                         @php($socialLinks = old('social_links', $setting->social_links ?? []))
@@ -200,6 +207,10 @@
 
 <!-- Tambahkan sedikit JS agar Tab Active mewarisi warna primer -->
 <style>
+    .setting-logo-input {
+        min-width: 0;
+    }
+
     .landing-image-preview {
         display: flex;
         justify-content: center;
@@ -226,6 +237,69 @@
 
 <script>
     (() => {
+        const imageInput = document.getElementById('landingImageInput');
+        const resolutionStatus = document.getElementById('landingImageResolution');
+        const currentImage = document.querySelector('[data-landing-image-preview]');
+        const minimumLongEdge = 1400;
+
+        if (!imageInput || !resolutionStatus) {
+            return;
+        }
+
+        const showResolution = (width, height, label) => {
+            const isLowResolution = Math.max(width, height) < minimumLongEdge;
+            resolutionStatus.classList.toggle('text-warning', isLowResolution);
+            resolutionStatus.classList.toggle('text-success', !isLowResolution);
+            resolutionStatus.textContent = `${label}: ${width} × ${height} px. ${
+                isLowResolution
+                    ? `Sisi terpanjang kurang dari ${minimumLongEdge} px; gambar mungkin tampak pecah di landing page.`
+                    : 'Dimensi sumber memadai; ketajaman juga dipengaruhi kualitas dan kompresi file.'
+            }`;
+        };
+
+        if (currentImage) {
+            const showCurrentResolution = () => {
+                showResolution(currentImage.naturalWidth, currentImage.naturalHeight, 'Resolusi gambar saat ini');
+            };
+
+            if (currentImage.complete) {
+                if (currentImage.naturalWidth > 0) {
+                    showCurrentResolution();
+                } else {
+                    resolutionStatus.textContent = 'Resolusi gambar saat ini tidak dapat dibaca.';
+                }
+            } else {
+                currentImage.addEventListener('load', showCurrentResolution, { once: true });
+                currentImage.addEventListener('error', () => {
+                    resolutionStatus.textContent = 'Resolusi gambar saat ini tidak dapat dibaca.';
+                }, { once: true });
+            }
+        }
+
+        imageInput.addEventListener('change', () => {
+            const file = imageInput.files?.[0];
+
+            if (!file) {
+                return;
+            }
+
+            const objectUrl = URL.createObjectURL(file);
+            const image = new Image();
+            image.addEventListener('load', () => {
+                URL.revokeObjectURL(objectUrl);
+                if (imageInput.files?.[0] === file) {
+                    showResolution(image.naturalWidth, image.naturalHeight, 'Resolusi file terpilih');
+                }
+            }, { once: true });
+            image.addEventListener('error', () => {
+                URL.revokeObjectURL(objectUrl);
+                if (imageInput.files?.[0] === file) {
+                    resolutionStatus.textContent = 'Dimensi gambar tidak dapat dibaca; pilih file gambar yang valid.';
+                }
+            }, { once: true });
+            image.src = objectUrl;
+        });
+
         const list = document.getElementById('socialLinksList');
         const template = document.getElementById('socialLinkTemplate');
         const addButton = document.getElementById('addSocialLink');

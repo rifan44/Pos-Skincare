@@ -264,7 +264,7 @@ class CatalogManagementTest extends TestCase
         ]);
     }
 
-    public function test_cashier_can_filter_pos_catalog_by_type_and_brand(): void
+    public function test_cashier_can_search_pos_catalog_by_name_sku_type_and_brand(): void
     {
         $cashier = User::factory()->create(['role' => 'kasir']);
         $serum = Category::create(['name' => 'Serum', 'category_type' => 'jenis']);
@@ -274,10 +274,20 @@ class CatalogManagementTest extends TestCase
         $this->actingAs($cashier)
             ->get(route('pos.index'))
             ->assertOk()
-            ->assertSee('id="category_filter"', false)
-            ->assertSee('id="brand_filter"', false)
+            ->assertSee('id="search_manual"', false)
+            ->assertDontSee('id="category_filter"', false)
+            ->assertDontSee('id="brand_filter"', false)
+            ->assertSee('const searchableFields = [product.name, product.sku, product.category?.name, product.brand?.name];', false)
             ->assertSee('id="sort_products"', false)
             ->assertSee('id="order_discount_input"', false)
+            ->assertSee('id="discount_amount_input"', false)
+            ->assertSee('data-theme-toggle', false)
+            ->assertSee('id="cart_body"', false)
+            ->assertSee('inputmode="decimal" maxlength="6"', false)
+            ->assertSee('Math.round(base * rate / 100)', false)
+            ->assertSee('Math.min(100, Math.max(0, value))', false)
+            ->assertSee('data-cart-action="discount-percent"', false)
+            ->assertSee('discount: productDiscountAmount(item)', false)
             ->assertSee('Serum Kahf')
             ->assertSee('Kahf');
     }

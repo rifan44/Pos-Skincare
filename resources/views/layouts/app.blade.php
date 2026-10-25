@@ -9,6 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', $appSetting->store_name ?? 'Skincare POS')</title>
+    @include('partials.theme-script')
     
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -96,6 +97,12 @@
             border-bottom: none;
         }
         td { color: var(--text-dark); border-color: var(--border-color); }
+    </style>
+    @include('partials.theme-styles')
+    <style>
+        .table-responsive > .table.table-scrollable {
+            min-width: 56rem;
+        }
     </style>
 </head>
 <body>

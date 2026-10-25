@@ -60,7 +60,7 @@
             <p class="small text-muted mb-0">Catatan retur tersimpan sebagai audit dan tidak mengubah struk penjualan asli.</p>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 table-scrollable">
                 <thead class="table-light">
                     <tr>
                         <th class="px-4 py-3">Waktu</th>
@@ -98,7 +98,7 @@
             <form action="{{ route('history.returns.store', $transaction) }}" method="POST">
                 @csrf
                 <div class="table-responsive mb-4">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle table-scrollable">
                         <thead class="table-light">
                             <tr>
                                 <th>Produk</th>

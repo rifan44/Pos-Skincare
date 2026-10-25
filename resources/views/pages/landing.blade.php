@@ -71,7 +71,7 @@
         isolation: isolate;
         overflow: hidden;
         border: 1px solid var(--border-color);
-        background: linear-gradient(135deg, #fff 0%, #f8efec 100%);
+        background: linear-gradient(135deg, var(--card-bg) 0%, var(--surface-alt) 100%);
         box-shadow: 0 1rem 3rem rgba(59, 51, 49, 0.07);
     }
     .about-panel::before {
@@ -96,19 +96,22 @@
         gap: 0.55rem;
         padding: 0.55rem 0.9rem;
         border-radius: 50rem;
-        background: #f4e7e3;
-        color: var(--primary-color);
+        background: var(--surface-alt);
+        color: var(--text-dark);
         font-size: 0.78rem;
         font-weight: 700;
         letter-spacing: 0.06em;
         text-transform: uppercase;
     }
+    .about-eyebrow i {
+        color: var(--primary-color);
+    }
     .about-highlight {
         height: 100%;
         padding: 1rem;
-        border: 1px solid rgba(199, 139, 125, 0.18);
+        border: 1px solid var(--border-color);
         border-radius: 1.1rem;
-        background: rgba(255, 255, 255, 0.86);
+        background: var(--card-bg);
     }
     .about-highlight-icon {
         display: inline-flex;
@@ -117,8 +120,11 @@
         width: 2.65rem;
         height: 2.65rem;
         border-radius: 0.9rem;
-        background: #f7eeeb;
+        background: var(--surface-alt);
         color: var(--primary-color);
+    }
+    html[data-theme="dark"] .about-panel {
+        box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.2);
     }
     .btn-hero {
         background-color: var(--primary-color);
@@ -271,12 +277,12 @@
         <div class="row align-items-center g-4 g-lg-5">
             <div class="col-lg-7">
                 <span class="about-eyebrow"><i class="fas fa-spa" aria-hidden="true"></i>Tentang {{ $appSetting->store_name ?? 'Skincare POS' }}</span>
-                <h2 class="font-serif fw-bold text-dark mt-4 mb-3">Mendukung Pertumbuhan Bisnis Kecantikan Anda</h2>
+                <h2 class="font-serif fw-bold text-dark mt-4 mb-3">Operasional toko skincare, tertata dalam satu sistem</h2>
                 <p class="text-muted mb-3" style="font-size: 1.05rem; line-height: 1.8;">
-                    <strong>{{ $appSetting->store_name ?? 'Skincare POS' }}</strong> membantu toko skincare mencatat penjualan dan mengelola stok produk dalam satu alur kerja.
+                    <strong>{{ $appSetting->store_name ?? 'Skincare POS' }}</strong> menyatukan data produk, transaksi kasir, dan pemantauan stok agar pekerjaan harian lebih mudah ditinjau.
                 </p>
                 <p class="text-muted mb-0" style="line-height: 1.8;">
-                    Informasi jenis dan merek produk tersusun bersama transaksi, sehingga kasir lebih mudah menemukan barang dan admin dapat meninjau aktivitas toko.
+                    Kasir dapat menemukan produk berdasarkan jenis dan merek, sementara stok diperbarui setelah checkout berhasil dan admin dapat meninjau aktivitas penjualan.
                 </p>
             </div>
             <div class="col-lg-5">
@@ -320,7 +326,7 @@
     <div class="card border-0 rounded-4 overflow-hidden shadow-sm" style="background-color: var(--card-bg);">
         <div class="row g-0">
             <!-- Kontak toko mengikuti data pada Pengaturan -->
-            <div class="col-lg-5 text-white p-5 d-flex flex-column justify-content-center" style="background-color: var(--primary-color);">
+            <div class="col-lg-5 text-white p-4 p-lg-5 d-flex flex-column justify-content-center" style="background-color: var(--primary-color);">
                 <h3 class="font-serif fw-bold mb-4">Hubungi Toko</h3>
                 <p class="mb-5 opacity-75" style="line-height: 1.8;">Informasi kontak di bagian ini mengikuti data toko yang diatur oleh admin.</p>
                 
@@ -347,7 +353,7 @@
             </div>
             
             <!-- Aksi sesuai akses pengguna -->
-            <div class="col-lg-7 p-5">
+            <div class="col-lg-7 p-4 p-lg-5">
                 <h4 class="font-serif fw-bold text-dark mb-3">Butuh bantuan?</h4>
                 <p class="text-muted mb-4" style="font-size: 1.05rem; line-height: 1.8;">
                     Hubungi toko melalui WhatsApp. Untuk menggunakan kasir atau mengelola toko, masuk dengan akun yang sudah dibuat admin.

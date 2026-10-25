@@ -26,6 +26,7 @@
             padding: 2.5rem;
             width: 90%;
             max-width: 400px;
+            box-sizing: border-box;
         }
         .text-center { text-align: center; }
         .mb-4 { margin-bottom: 1.5rem; }
@@ -79,8 +80,14 @@
             box-shadow: 0 8px 20px rgba(26, 27, 40, 0.2);
         }
     </style>
+    @include('partials.theme-script')
+    @include('partials.theme-styles')
 </head>
 <body>
+
+    <button class="theme-toggle guest-theme-toggle" type="button" data-theme-toggle aria-label="Gunakan tema gelap" title="Gunakan tema gelap">
+        <span data-theme-icon aria-hidden="true">☾</span>
+    </button>
 
     <div class="login-card">
         <div class="text-center mb-4">

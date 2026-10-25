@@ -6,6 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ config('app.name', 'Laravel') }}</title>
+        @include('partials.theme-script')
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -13,8 +14,15 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('partials.theme-styles')
+        <style>
+            .guest-theme-toggle [data-theme-icon] { font-size: 1.15rem; line-height: 1; }
+        </style>
     </head>
     <body class="font-sans text-gray-900 antialiased">
+        <button class="theme-toggle guest-theme-toggle" type="button" data-theme-toggle aria-label="Gunakan tema gelap" title="Gunakan tema gelap">
+            <span data-theme-icon aria-hidden="true">☾</span>
+        </button>
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
             <div>
                 <a href="/">

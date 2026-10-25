@@ -3,27 +3,28 @@
     $primaryColor = $appSetting->primary_color ?? '#c78b7d';
 @endphp
 
-<nav class="navbar navbar-expand-lg sticky-top py-3" style="background-color: rgba(253, 251, 247, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #f0e9e4;">
+<nav class="navbar navbar-expand-xl sticky-top py-3" style="background-color: rgba(253, 251, 247, 0.95); border-bottom: 1px solid #f0e9e4;">
     <div class="container-fluid px-lg-5">
         
         <!-- Logo Kiri -->
         <a class="navbar-brand d-flex align-items-center gap-2 m-0" href="{{ url('/') }}">
             @if($appSetting && $appSetting->logo)
-                <img src="{{ asset('storage/' . $appSetting->logo) }}" class="rounded-circle shadow-sm" width="38" height="38" style="object-fit: cover;" alt="Logo {{ $appSetting->store_name ?? 'toko' }}">
+                <img src="{{ asset('storage/' . $appSetting->logo) }}" class="brand-mark" width="44" height="44" alt="Logo {{ $appSetting->store_name ?? 'toko' }}">
             @else
-                <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px; background-color: {{ $primaryColor }}; font-size: 14px;">
+                <span class="brand-mark brand-mark-placeholder text-white d-flex align-items-center justify-content-center fw-bold" style="background-color: {{ $primaryColor }};">
                     {{ substr($appSetting->store_name ?? 'SK', 0, 2) }}
-                </div>
+                </span>
             @endif
-            <span class="font-serif fw-bold fs-4" style="color: var(--text-dark); letter-spacing: 0.5px;">
+            <span class="brand-name font-serif fw-bold" style="color: var(--text-dark);" title="{{ $appSetting->store_name ?? 'Skincare POS' }}">
                 {{ $appSetting->store_name ?? 'Skincare POS' }}
             </span>
         </a>
 
-        <!-- Tombol Hamburger (Mobile) -->
-        <button class="navbar-toggler border-0 shadow-none px-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-expanded="false" aria-label="Buka navigasi">
-            <i class="fas fa-bars fs-4 text-dark"></i>
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            <button class="navbar-toggler border-0 shadow-none px-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-expanded="false" aria-label="Buka navigasi">
+                <i class="fas fa-bars fs-4 text-dark"></i>
+            </button>
+        </div>
 
         <div class="offcanvas offcanvas-end" style="background-color: var(--bg-cream);" tabindex="-1" id="offcanvasNavbar">
             <div class="offcanvas-header border-bottom py-3">
@@ -53,7 +54,10 @@
                 </ul>
                 
                 <!-- Area Kanan (Tombol & Profil) -->
-                <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mt-3 mt-lg-0">
+                <div class="d-flex flex-column flex-xl-row align-items-xl-center gap-3 mt-3 mt-xl-0">
+                    <button class="theme-toggle align-self-start align-self-xl-center" type="button" data-theme-toggle aria-label="Gunakan tema gelap" title="Gunakan tema gelap">
+                        <i class="fas fa-moon" data-theme-icon aria-hidden="true"></i>
+                    </button>
                     @auth
                         <!-- Area Kanan Khusus Pengguna Login -->
                         <a href="{{ route('pos.index') }}" class="btn fw-bold px-4 py-2 rounded-pill shadow-sm" style="background-color: var(--primary-color); color: #fff; font-size: 0.9rem;">
@@ -66,6 +70,7 @@
                                 <span>{{ Auth::user()->name }}</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2 p-2 rounded-4" style="background-color: var(--card-bg);">
+                                <li><a class="dropdown-item rounded-3 py-2 fw-medium text-dark" href="{{ route('profile.edit') }}">Profil Akun</a></li>
                                 @if(Auth::user()->role === 'admin')
                                     <li><a class="dropdown-item rounded-3 py-2 fw-medium text-dark" href="{{ route('users.index') }}">Pegawai</a></li>
                                     <li><a class="dropdown-item rounded-3 py-2 fw-medium text-dark" href="{{ route('settings.index') }}">Pengaturan</a></li>
@@ -95,4 +100,48 @@
 <style>
     .hover-primary { transition: color 0.3s ease; }
     .hover-primary:hover { color: var(--primary-color) !important; }
+    .navbar-brand {
+        min-width: 0;
+        max-width: calc(100% - 3rem);
+    }
+    .brand-mark {
+        display: block;
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        border: 2px solid var(--card-bg);
+        border-radius: 50%;
+        outline: 1px solid rgba(199, 139, 125, 0.45);
+        object-fit: cover;
+        box-shadow: 0 4px 12px rgba(59, 51, 49, 0.12);
+    }
+    .brand-mark-placeholder {
+        font-size: 0.82rem;
+        letter-spacing: 0.04em;
+    }
+    .brand-name {
+        display: block;
+        min-width: 0;
+        max-width: clamp(8.5rem, 16vw, 14rem);
+        overflow: hidden;
+        font-size: clamp(1.15rem, 2vw, 1.5rem);
+        letter-spacing: -0.025em;
+        line-height: 1.1;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    html[data-theme="dark"] .brand-mark {
+        border-color: var(--card-bg);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+    @media (max-width: 359.98px) {
+        .brand-mark {
+            flex-basis: 40px;
+            width: 40px;
+            height: 40px;
+        }
+        .brand-name {
+            max-width: 10.5rem;
+        }
+    }
 </style>
