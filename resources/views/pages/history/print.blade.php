@@ -14,14 +14,25 @@
             color: #000;
             background-color: #fff;
         }
-        
+
+        @php $width = request('width') === '58' ? 58 : 80; @endphp
+
         .ticket {
             box-sizing: border-box;
             width: 100%;
-            max-width: 80mm;
+            max-width: {{ $width }}mm;
             padding: 3mm;
             margin: 0 auto;
         }
+
+        @if($width === 58)
+        body {
+            font-size: 11px;
+        }
+        .ticket {
+            padding: 2mm;
+        }
+        @endif
 
         .text-center { text-align: center; }
         .text-right { text-align: right; }

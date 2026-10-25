@@ -4,14 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bukti Refund #{{ $transactionReturn->id }}</title>
+    @php $width = request('width') === '58' ? 58 : 80; @endphp
     <style>
         body { margin: 0; padding: 16px; font-family: 'Courier New', monospace; font-size: 12px; color: #000; }
-        .ticket { box-sizing: border-box; width: 100%; max-width: 80mm; margin: auto; }
+        .ticket { box-sizing: border-box; width: 100%; max-width: {{ $width }}mm; margin: auto; }
         .center { text-align: center; }
         .right { text-align: right; }
         table { width: 100%; border-collapse: collapse; margin: 12px 0; }
         td, th { padding: 3px 0; vertical-align: top; }
         .line { border-top: 1px dashed #000; }
+        @if($width === 58)
+        body { font-size: 11px; padding: 8px; }
+        .ticket { padding: 2mm; }
+        @endif
         @media print { @page { margin: 0; } body { padding: 3mm; } }
     </style>
 </head>

@@ -24,8 +24,8 @@ class HistoryController extends Controller
             $query->whereBetween('created_at', [$start, $end]);
         }
 
-        // Tampilkan hasil (terbaru di atas)
-        $transactions = $query->with('returns')->latest()->get();
+        // Tampilkan hasil (terbaru di atas), 25 per halaman
+        $transactions = $query->with('returns')->latest()->paginate(25);
         
         return view('pages.history.index', compact('transactions'));
     }
