@@ -31,4 +31,14 @@ class Product extends Model
     {
         return $this->belongsTo(Category::class, 'brand_id');
     }
+
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    public function purchaseItems()
+    {
+        return $this->hasMany(PurchaseItem::class);
+    }
 }

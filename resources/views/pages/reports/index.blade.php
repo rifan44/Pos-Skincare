@@ -11,10 +11,15 @@
             <p class="text-muted mb-0" style="font-size: 0.95rem;">Omzet dan laba memperhitungkan diskon, HPP, serta refund pada tanggal pemrosesannya.</p>
         </div>
         <div class="col-sm-4 text-sm-end mt-3 mt-sm-0">
-            @if(request('start_date'))
-            <a href="{{ route('reports.pdf', ['start_date' => request('start_date'), 'end_date' => request('end_date')]) }}" target="_blank" class="btn btn-dark rounded-pill px-4 shadow-sm">
-                <i class="fas fa-file-pdf me-2"></i>Cetak Dokumen
-            </a>
+            @if(request('start_date') && request('end_date'))
+            <div class="d-flex justify-content-sm-end gap-2">
+                <a href="{{ route('reports.pdf', ['start_date' => request('start_date'), 'end_date' => request('end_date')]) }}" target="_blank" class="btn btn-dark rounded-pill px-4 shadow-sm">
+                    <i class="fas fa-print me-2"></i>Cetak / PDF
+                </a>
+                <a href="{{ route('reports.csv', ['start_date' => request('start_date'), 'end_date' => request('end_date')]) }}" class="btn btn-outline-dark rounded-pill px-4 shadow-sm">
+                    <i class="fas fa-file-csv me-2"></i>CSV / Excel
+                </a>
+            </div>
             @endif
         </div>
     </div>

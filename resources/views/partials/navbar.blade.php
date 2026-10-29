@@ -39,8 +39,10 @@
                         <!-- Menu Khusus Pengguna Login -->
                         @if(Auth::user()->role === 'admin')
                             <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ request()->routeIs('dashboard.*') ? 'fw-bold' : '' }}" style="{{ request()->routeIs('dashboard.*') ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('dashboard.index') }}">Dashboard</a></li>
-                            <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ request()->routeIs('categories.*') ? 'fw-bold' : '' }}" style="{{ request()->routeIs('categories.*') ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('categories.index') }}">Kategori</a></li>
-                            <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ request()->routeIs('products.*') ? 'fw-bold' : '' }}" style="{{ request()->routeIs('products.*') ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('products.index') }}">Produk</a></li>
+                            @php($catalogActive = request()->routeIs('catalog.*', 'categories.*', 'products.*'))
+                            <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ $catalogActive ? 'fw-bold' : '' }}" style="{{ $catalogActive ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('catalog.index') }}">Katalog</a></li>
+                            @php($inventoryActive = request()->routeIs('inventory.*', 'suppliers.*', 'purchases.*', 'stock-movements.*'))
+                            <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ $inventoryActive ? 'fw-bold' : '' }}" style="{{ $inventoryActive ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('inventory.index') }}">Inventori</a></li>
                             <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ request()->routeIs('reports.*') ? 'fw-bold' : '' }}" style="{{ request()->routeIs('reports.*') ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('reports.index') }}">Laporan</a></li>
                         @endif
                         <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ request()->routeIs('history.*') ? 'fw-bold' : '' }}" style="{{ request()->routeIs('history.*') ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('history.index') }}">Riwayat</a></li>
@@ -55,8 +57,9 @@
                 
                 <!-- Area Kanan (Tombol & Profil) -->
                 <div class="d-flex flex-column flex-xl-row align-items-xl-center gap-3 mt-3 mt-xl-0">
-                    <button class="theme-toggle align-self-start align-self-xl-center" type="button" data-theme-toggle aria-label="Gunakan tema gelap" title="Gunakan tema gelap">
+                    <button class="theme-toggle navbar-theme-toggle align-self-start align-self-xl-center" type="button" data-theme-toggle aria-label="Gunakan tema gelap" title="Gunakan tema gelap">
                         <i class="fas fa-moon" data-theme-icon aria-hidden="true"></i>
+                        <span class="theme-toggle-caption">Tema</span>
                     </button>
                     @auth
                         <!-- Area Kanan Khusus Pengguna Login -->

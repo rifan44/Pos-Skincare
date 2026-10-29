@@ -116,48 +116,72 @@
         document.addEventListener('DOMContentLoaded', () => {
             const offcanvas = document.getElementById('offcanvasNavbar');
 
-            if (!offcanvas || !window.bootstrap?.Offcanvas) {
-                return;
+            if (offcanvas && window.bootstrap?.Offcanvas) {
+                offcanvas.querySelectorAll('[data-nav-link]').forEach((link) => {
+                    link.addEventListener('click', (event) => {
+                        const instance = window.bootstrap.Offcanvas.getInstance(offcanvas);
+
+                        if (!instance || !offcanvas.classList.contains('show')) {
+                            return;
+                        }
+
+                        const target = new URL(link.href, window.location.href);
+                        const current = new URL(window.location.href);
+                        const samePage = target.origin === current.origin
+                            && target.pathname === current.pathname
+                            && target.search === current.search;
+
+                        if (!samePage) {
+                            instance.hide();
+                            return;
+                        }
+
+                        event.preventDefault();
+
+                        offcanvas.addEventListener('hidden.bs.offcanvas', () => {
+                            const nextLocation = `${target.pathname}${target.search}${target.hash}`;
+                            const currentLocation = `${current.pathname}${current.search}${current.hash}`;
+
+                            if (nextLocation !== currentLocation) {
+                                window.history.pushState(null, '', nextLocation);
+                            }
+
+                            if (target.hash) {
+                                document.getElementById(decodeURIComponent(target.hash.slice(1)))
+                                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            } else {
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                        }, { once: true });
+
+                        instance.hide();
+                    });
+                });
             }
 
-            offcanvas.querySelectorAll('[data-nav-link]').forEach((link) => {
-                link.addEventListener('click', (event) => {
-                    const instance = window.bootstrap.Offcanvas.getInstance(offcanvas);
-
-                    if (!instance || !offcanvas.classList.contains('show')) {
-                        return;
-                    }
-
-                    const target = new URL(link.href, window.location.href);
-                    const current = new URL(window.location.href);
-                    const samePage = target.origin === current.origin
-                        && target.pathname === current.pathname
-                        && target.search === current.search;
-
-                    if (!samePage) {
-                        instance.hide();
-                        return;
-                    }
-
+            document.querySelectorAll('form[data-confirm-delete]').forEach((form) => {
+                form.addEventListener('submit', (event) => {
                     event.preventDefault();
 
-                    offcanvas.addEventListener('hidden.bs.offcanvas', () => {
-                        const nextLocation = `${target.pathname}${target.search}${target.hash}`;
-                        const currentLocation = `${current.pathname}${current.search}${current.hash}`;
-
-                        if (nextLocation !== currentLocation) {
-                            window.history.pushState(null, '', nextLocation);
+                    Swal.fire({
+                        title: form.dataset.confirmTitle || 'Hapus data?',
+                        text: form.dataset.confirmText || 'Data yang dihapus tidak lagi tampil di daftar aktif.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, hapus',
+                        cancelButtonText: 'Batal',
+                        reverseButtons: true,
+                        focusCancel: true,
+                        buttonsStyling: false,
+                        customClass: {
+                            confirmButton: 'btn btn-danger rounded-pill px-4 ms-2',
+                            cancelButton: 'btn btn-light border rounded-pill px-4',
+                        },
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
                         }
-
-                        if (target.hash) {
-                            document.getElementById(decodeURIComponent(target.hash.slice(1)))
-                                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        } else {
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                    }, { once: true });
-
-                    instance.hide();
+                    });
                 });
             });
         });

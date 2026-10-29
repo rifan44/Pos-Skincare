@@ -36,10 +36,16 @@ class DashboardController extends Controller
         $totalLaba = $summary['total_laba'];
         $hppBelumDiketahui = $summary['hpp_belum_diketahui'];
 
-        $stokMenipis = Product::with('category')->where('stock', '<', 10)->get();
+        $stokMenipis = Product::with('category')->where('stock', '<', 10)->orderBy('stock')->orderBy('name')->get();
+        $produkSegeraExpired = Product::query()
+            ->whereNotNull('expired_date')
+            ->whereBetween('expired_date', [Carbon::today(), Carbon::today()->addDays(30)])
+            ->orderBy('expired_date')
+            ->get();
 
         return view('pages.dashboard.index', compact(
-            'totalOmset', 'totalRefund', 'totalLaba', 'hppBelumDiketahui', 'totalTransaksi', 'stokMenipis', 'filterDate', 'title'
+            'totalOmset', 'totalRefund', 'totalLaba', 'hppBelumDiketahui', 'totalTransaksi', 'stokMenipis',
+            'produkSegeraExpired', 'filterDate', 'title'
         ));
     }
 }

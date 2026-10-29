@@ -94,9 +94,11 @@
                                 <td class="px-3 py-3">
                                     <div class="d-flex justify-content-end gap-2">
                                         <a href="{{ route('categories.edit', $category->id) }}" class="btn btn-sm btn-light border rounded-pill px-3">Edit</a>
-                                        <form action="{{ route('categories.destroy', $category->id) }}" method="POST" class="m-0" onsubmit="return confirm('Yakin ingin menghapus kategori ini?');">
+                                        <form action="{{ route('categories.destroy', $category->id) }}" method="POST" class="m-0" data-confirm-delete data-confirm-title="Hapus kategori?" data-confirm-text="Kategori {{ $category->name }} akan dihapus dari daftar aktif.">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">Hapus</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                <i class="fas fa-trash-alt me-1"></i>Hapus
+                                            </button>
                                         </form>
                                     </div>
                                 </td>

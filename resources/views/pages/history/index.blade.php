@@ -48,7 +48,10 @@
                     <tr>
                         <td class="px-4 py-3 fw-bold text-dark text-start">#{{ str_pad($trx->id, 5, '0', STR_PAD_LEFT) }}</td>
                         <td class="px-4 py-3 text-muted text-start">{{ $trx->created_at->format('d M Y, H:i') }}</td>
-                        <td class="px-4 py-3 text-start">Rp {{ number_format($trx->pay_amount, 0, ',', '.') }}</td>
+                        <td class="px-4 py-3 text-start">
+                            {{ strtoupper($trx->payment_method === 'qris' ? 'QRIS' : ($trx->payment_method ?: 'cash')) }}
+                            <div class="small text-muted">Rp {{ number_format($trx->pay_amount, 0, ',', '.') }}</div>
+                        </td>
                         <td class="px-4 py-3 fw-bold text-success text-start">Rp {{ number_format($trx->total_amount, 0, ',', '.') }}</td>
                         <td class="px-4 py-3">
                             @if($trx->return_status === 'refunded')

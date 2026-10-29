@@ -94,6 +94,12 @@
                     <td>No. TRX</td>
                     <td class="text-right">#TRX-{{ str_pad($transaction->id, 5, '0', STR_PAD_LEFT) }}</td>
                 </tr>
+                @if($transaction->customer_name || $transaction->customer_phone)
+                <tr>
+                    <td>Customer</td>
+                    <td class="text-right">{{ $transaction->customer_name ?: '-' }}{{ $transaction->customer_phone ? ' · '.$transaction->customer_phone : '' }}</td>
+                </tr>
+                @endif
             </table>
         </div>
 
@@ -141,7 +147,7 @@
                 <td class="text-right fw-bold" style="padding-top:5px;">{{ number_format($transaction->total_amount, 0, ',', '.') }}</td>
             </tr>
             <tr>
-                <td>TUNAI</td>
+                <td>{{ strtoupper($transaction->payment_method === 'qris' ? 'QRIS' : ($transaction->payment_method ?: 'cash')) }}</td>
                 <td class="text-right">{{ number_format($transaction->pay_amount, 0, ',', '.') }}</td>
             </tr>
             <tr>

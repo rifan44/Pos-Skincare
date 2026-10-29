@@ -14,7 +14,7 @@
         .summary-box { border: 1px solid #ddd; padding: 15px; margin-top: 20px; text-align: right; background-color: #fdfbf7; }
     </style>
 </head>
-<body onload="window.print()">
+<body>
     <div class="text-center">
         <h2 style="margin-bottom: 5px;">{{ $setting->store_name ?? 'POS Skincare' }}</h2>
         <p style="margin-top: 0; color: #666;">Laporan Penjualan dan Retur</p>

@@ -44,6 +44,7 @@ class CatalogManagementTest extends TestCase
             ->assertSee('Merek Skincare')
             ->assertSee('data-category-search', false)
             ->assertSee('data-category-sort', false)
+            ->assertSee('data-confirm-delete', false)
             ->assertSee('Toner');
 
         $this->actingAs($admin)->delete(route('categories.destroy', $category))
@@ -98,6 +99,28 @@ class CatalogManagementTest extends TestCase
         $this->assertNotSoftDeleted('categories', ['id' => $category->id]);
     }
 
+    public function test_category_can_be_deleted_when_only_trashed_products_reference_it(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $category = Category::create(['name' => 'Serum Lama', 'category_type' => 'jenis']);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Serum Arsip',
+            'purchase_price' => 10000,
+            'margin_percent' => 20,
+            'selling_price' => 12000,
+            'stock' => 0,
+        ]);
+        $product->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('categories.destroy', $category))
+            ->assertRedirect(route('categories.index'))
+            ->assertSessionHas('success', 'Kategori berhasil dihapus!');
+
+        $this->assertSoftDeleted('categories', ['id' => $category->id]);
+    }
+
     public function test_admin_can_create_update_and_soft_delete_a_product_with_server_calculated_prices(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -129,14 +152,13 @@ class CatalogManagementTest extends TestCase
             'name' => 'Serum Uji Revisi',
             'purchase_price' => 20000,
             'margin_percent' => 30,
-            'stock' => 5,
         ])->assertRedirect(route('products.index'));
 
         $this->assertDatabaseHas('products', [
             'id' => $product->id,
             'name' => 'Serum Uji Revisi',
             'selling_price' => 26000,
-            'stock' => 5,
+            'stock' => 8,
         ]);
 
         $this->actingAs($admin)->delete(route('products.destroy', $product))
@@ -254,7 +276,6 @@ class CatalogManagementTest extends TestCase
             'selling_price' => '15000',
             'margin_percent' => '50',
             'price_source' => 'selling_price',
-            'stock' => 5,
         ])->assertRedirect(route('products.index'));
 
         $this->assertDatabaseHas('products', [

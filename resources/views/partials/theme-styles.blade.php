@@ -33,21 +33,31 @@
     }
 
     .theme-toggle {
-        width: 2.6rem;
+        min-width: 2.6rem;
         height: 2.6rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 0;
+        gap: .45rem;
+        padding: 0 .72rem;
         border: 1px solid var(--border-color);
-        border-radius: 50%;
+        border-radius: 999px;
         background-color: var(--card-bg);
         color: var(--text-dark);
+        box-shadow: 0 5px 14px rgba(59, 51, 49, .06);
+        transition: border-color .2s ease, color .2s ease, background-color .2s ease, transform .2s ease;
     }
 
     .theme-toggle:hover {
         border-color: var(--primary-color);
         color: var(--primary-color);
+        transform: translateY(-1px);
+    }
+
+    .theme-toggle-caption {
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .02em;
     }
 
     .guest-theme-toggle {
@@ -127,6 +137,9 @@
         background-color: var(--card-bg) !important;
         color: var(--text-dark) !important;
     }
+    html[data-theme="dark"] .theme-toggle {
+        box-shadow: 0 5px 16px rgba(0, 0, 0, .22);
+    }
 
     html[data-theme="dark"] .btn-light,
     html[data-theme="dark"] .btn-white {
@@ -178,6 +191,10 @@
     }
     html[data-theme="dark"] .login-card h2 { color: var(--text-dark) !important; }
     html[data-theme="dark"] .login-card .custom-input { background-color: var(--input-bg); }
+    html[data-theme="dark"] .landing-image-placeholder {
+        background-color: var(--surface-alt);
+        color: var(--primary-color);
+    }
 
     html[data-theme="dark"] .pos-intro {
         border-color: var(--border-color);
@@ -223,4 +240,16 @@
     html[data-theme="dark"] .cart-heading small { color: var(--text-muted); }
     html[data-theme="dark"] .btn-pay:disabled { background: #413b39; color: #aa9e9a; }
     html[data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+
+    @media (max-width: 1199.98px) {
+        .navbar-theme-toggle {
+            align-self: center !important;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .navbar-theme-toggle .theme-toggle-caption {
+            display: none;
+        }
+    }
 </style>

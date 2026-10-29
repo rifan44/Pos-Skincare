@@ -222,6 +222,42 @@
 
                         <div class="row g-2 cart-fields">
                             <div class="col-6">
+                                <label for="customer_type" class="form-label pos-field-label">Jenis pelanggan</label>
+                                <select name="customer_type" id="customer_type" class="form-select custom-input" required>
+                                    <option value="regular">Customer biasa</option>
+                                    <option value="reseller">Reseller</option>
+                                    <option value="internal">Internal</option>
+                                    <option value="other">Lainnya</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="customer_id" class="form-label pos-field-label">Customer tersimpan <span class="fw-normal">(opsional)</span></label>
+                                <select name="customer_id" id="customer_id" class="form-select custom-input">
+                                    <option value="">Customer baru / tanpa master</option>
+                                    @foreach($customers as $customer)
+                                        <option value="{{ $customer->id }}" data-type="{{ $customer->customer_type }}" data-name="{{ $customer->name }}" data-phone="{{ $customer->phone }}">{{ $customer->name }}{{ $customer->phone ? ' · '.$customer->phone : '' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="payment_method" class="form-label pos-field-label">Pembayaran</label>
+                                <select name="payment_method" id="payment_method" class="form-select custom-input" required>
+                                    <option value="cash">Tunai</option>
+                                    <option value="transfer">Transfer</option>
+                                    <option value="qris">QRIS</option>
+                                    <option value="debit">Debit</option>
+                                    <option value="credit">Kredit / Piutang</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="customer_name" class="form-label pos-field-label">Nama customer <span class="fw-normal">(opsional)</span></label>
+                                <input type="text" name="customer_name" id="customer_name" class="form-control custom-input" maxlength="255" placeholder="Nama customer / reseller">
+                            </div>
+                            <div class="col-6">
+                                <label for="customer_phone" class="form-label pos-field-label">WhatsApp <span class="fw-normal">(opsional)</span></label>
+                                <input type="tel" name="customer_phone" id="customer_phone" class="form-control custom-input" maxlength="30" placeholder="08xx...">
+                            </div>
+                            <div class="col-6">
                                 <label for="order_discount_input" class="form-label pos-field-label">Diskon total</label>
                                 <div class="input-group percentage-group">
                                     <input type="text" inputmode="decimal" maxlength="6" class="form-control custom-input" id="order_discount_input" value="0" placeholder="0" aria-describedby="order_discount_preview">
@@ -276,6 +312,7 @@
     const productDiscountDisplay = document.getElementById('product_discount_display');
     const subtotalDisplay = document.getElementById('subtotal_display');
     const payAmountInput = document.getElementById('pay_amount');
+    const paymentMethodInput = document.getElementById('payment_method');
     const orderDiscountPreview = document.getElementById('order_discount_preview');
     const kembalianDisplay = document.getElementById('kembalian_display');
     const btnBayar = document.getElementById('btn_bayar');
@@ -442,9 +479,14 @@
         const total = Number.parseInt(totalAmountInput.value, 10) || 0;
         const paid = amount(payAmountInput);
         const change = paid - total;
-        const paymentIsValid = payAmountInput.value.trim() !== '' && change >= 0 && cart.length > 0;
+        const isCredit = paymentMethodInput.value === 'credit';
+        const paymentIsValid = payAmountInput.value.trim() !== '' && (isCredit || change >= 0) && cart.length > 0;
 
-        kembalianDisplay.textContent = paymentIsValid ? 'Rp ' + money(change) : 'Uang Kurang';
+        if (isCredit && paymentIsValid && change < 0) {
+            kembalianDisplay.textContent = 'Piutang Rp ' + money(Math.abs(change));
+        } else {
+            kembalianDisplay.textContent = paymentIsValid ? 'Rp ' + money(change) : 'Uang Kurang';
+        }
         kembalianDisplay.style.color = paymentIsValid ? 'var(--text-dark)' : 'red';
         btnBayar.disabled = !paymentIsValid;
     }
@@ -535,20 +577,43 @@
         normalizeAmountInput(payAmountInput);
         calculateKembalian();
     });
+    paymentMethodInput.addEventListener('change', calculateKembalian);
+
+    document.getElementById('customer_id').addEventListener('change', event => {
+        const option = event.target.selectedOptions[0];
+        const customerType = document.getElementById('customer_type');
+        const customerName = document.getElementById('customer_name');
+        const customerPhone = document.getElementById('customer_phone');
+        const isStoredCustomer = Boolean(event.target.value);
+
+        if (isStoredCustomer) {
+            customerType.value = option.dataset.type || 'regular';
+            customerName.value = option.dataset.name || '';
+            customerPhone.value = option.dataset.phone || '';
+        }
+
+        customerName.readOnly = isStoredCustomer;
+        customerPhone.readOnly = isStoredCustomer;
+        customerType.disabled = isStoredCustomer;
+    });
 
     document.getElementById('form_transaksi').addEventListener('submit', function (event) {
         event.preventDefault();
         const totals = updateTotals(true);
-        if (!payAmountInput.reportValidity() || amount(payAmountInput) < totals.total) {
+        const isCredit = paymentMethodInput.value === 'credit';
+        if (!payAmountInput.reportValidity() || (!isCredit && amount(payAmountInput) < totals.total)) {
             calculateKembalian();
             return;
         }
 
         const paid = amount(payAmountInput);
         const change = paid - totals.total;
+        const paymentSummary = isCredit && change < 0
+            ? `Piutang: <b>Rp ${money(Math.abs(change))}</b>`
+            : `Kembalian: <b>Rp ${money(Math.max(0, change))}</b>`;
         Swal.fire({
             title: 'Proses Pembayaran?',
-            html: `Subtotal: <b>Rp ${money(totals.subtotal)}</b><br>Diskon transaksi: <b>−Rp ${money(totals.orderDiscount)}</b><br>Total tagihan: <b>Rp ${money(totals.total)}</b><br>Diterima: <b>Rp ${money(paid)}</b><br>Kembalian: <b>Rp ${money(change)}</b>`,
+            html: `Subtotal: <b>Rp ${money(totals.subtotal)}</b><br>Diskon transaksi: <b>−Rp ${money(totals.orderDiscount)}</b><br>Total tagihan: <b>Rp ${money(totals.total)}</b><br>Diterima: <b>Rp ${money(paid)}</b><br>${paymentSummary}`,
             icon: 'info',
             showCancelButton: true,
             confirmButtonColor: 'var(--primary-color)',
@@ -558,6 +623,7 @@
             customClass: { confirmButton: 'rounded-pill px-4', cancelButton: 'rounded-pill px-4' }
         }).then(result => {
             if (result.isConfirmed) {
+                document.getElementById('customer_type').disabled = false;
                 orderDiscountInput.value = String(percentage(orderDiscountInput));
                 payAmountInput.value = String(amount(payAmountInput));
                 this.submit();

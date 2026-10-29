@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
-use App\Models\Transaction;
-use App\Models\TransactionReturn;
-use App\Services\TransactionFinancialSummary;
+use App\Services\ReportDataService;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
-    public function index(Request $request, TransactionFinancialSummary $financialSummary)
+    public function index(Request $request, ReportDataService $reportData)
     {
         $request->validate([
             'start_date' => ['nullable', 'required_with:end_date', 'date'],
@@ -20,20 +20,7 @@ class ReportController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        $query = Transaction::with('details')->orderBy('created_at', 'desc');
-
-        if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
-        }
-
-        $transactions = $query->get();
-        $returnsQuery = TransactionReturn::with('details')->orderBy('created_at', 'desc');
-        if ($startDate && $endDate) {
-            $returnsQuery->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
-        }
-        $returns = $returnsQuery->get();
-
-        $summary = $financialSummary->summarize($transactions, $returns);
+        $summary = $reportData->summarize($startDate, $endDate);
         $dailyReports = $summary['daily_reports'];
         $totalOmzet = $summary['total_omzet'];
         $grossOmzet = $summary['gross_omzet'];
@@ -50,7 +37,7 @@ class ReportController extends Controller
         ));
     }
 
-    public function exportPdf(Request $request, TransactionFinancialSummary $financialSummary)
+    public function exportPdf(Request $request, ReportDataService $reportData)
     {
         $request->validate([
             'start_date' => ['nullable', 'required_with:end_date', 'date'],
@@ -60,18 +47,7 @@ class ReportController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        $query = Transaction::with('details')->orderBy('created_at', 'desc');
-        if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
-        }
-        $transactions = $query->get();
-        $returnsQuery = TransactionReturn::with('details')->orderBy('created_at', 'desc');
-        if ($startDate && $endDate) {
-            $returnsQuery->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
-        }
-        $returns = $returnsQuery->get();
-
-        $summary = $financialSummary->summarize($transactions, $returns);
+        $summary = $reportData->summarize($startDate, $endDate);
         $dailyReports = $summary['daily_reports'];
         $totalOmzet = $summary['total_omzet'];
         $grossOmzet = $summary['gross_omzet'];
@@ -81,9 +57,49 @@ class ReportController extends Controller
         $hppBelumDiketahui = $summary['hpp_belum_diketahui'];
         $setting = Setting::first();
 
-        return view('pages.reports.pdf', compact(
+        return Pdf::loadView('pages.reports.pdf', compact(
             'dailyReports', 'totalOmzet', 'grossOmzet', 'totalDiskon', 'totalRefund', 'totalLaba', 'hppBelumDiketahui',
             'startDate', 'endDate', 'setting'
-        ));
+        ))->download('laporan-penjualan-'.$startDate.'-sampai-'.$endDate.'.pdf');
+    }
+
+    public function exportCsv(Request $request, ReportDataService $reportData): StreamedResponse
+    {
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $summary = $reportData->summarize($startDate, $endDate);
+        $filename = 'laporan-penjualan-'.$startDate.'-sampai-'.$endDate.'.csv';
+
+        return response()->streamDownload(function () use ($summary, $startDate, $endDate): void {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, "\xEF\xBB\xBF");
+            fputcsv($handle, ['Laporan Penjualan dan Retur']);
+            fputcsv($handle, ['Periode', $startDate, 'sampai', $endDate]);
+            fputcsv($handle, []);
+            fputcsv($handle, ['Tanggal', 'Transaksi', 'Unit Terjual', 'Unit Retur', 'Diskon', 'Refund', 'HPP Bersih', 'Omzet Bersih', 'Laba Kotor']);
+
+            foreach ($summary['daily_reports'] as $report) {
+                fputcsv($handle, [
+                    $report['date'],
+                    $report['total_transactions'],
+                    $report['total_items'],
+                    $report['returned_items'],
+                    $report['discounts'],
+                    $report['refunds'],
+                    $report['modal'],
+                    $report['omzet'],
+                    $report['laba'],
+                ]);
+            }
+
+            fputcsv($handle, []);
+            fputcsv($handle, ['TOTAL', '', $summary['total_item'], $summary['total_item_diretur'], $summary['total_discount'], $summary['total_refund'], $summary['total_modal'], $summary['total_omzet'], $summary['total_laba']]);
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 }

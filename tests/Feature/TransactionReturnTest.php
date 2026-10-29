@@ -158,6 +158,25 @@ class TransactionReturnTest extends TestCase
         $this->assertSame(2, $product->fresh()->stock);
     }
 
+    public function test_restocking_return_for_deleted_product_is_rejected(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        [$transaction, $product, $detail] = $this->createSale();
+        $product->delete();
+
+        $response = $this->actingAs($admin)
+            ->from(route('history.returns.index', $transaction))
+            ->post(route('history.returns.store', $transaction), [
+                'reason' => 'Produk dikembalikan',
+                'refund_method' => 'cash',
+                'items' => [$detail->id => ['quantity' => 1, 'restocked_quantity' => 1]],
+            ]);
+
+        $response->assertRedirect(route('history.returns.index', $transaction))
+            ->assertSessionHasErrors('items');
+        $this->assertDatabaseCount('transaction_returns', 0);
+    }
+
     public function test_returns_are_limited_to_seven_days_and_admin_access(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

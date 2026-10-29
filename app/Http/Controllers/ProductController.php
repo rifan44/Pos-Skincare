@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Models\StockMovement;
 use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
@@ -130,8 +132,21 @@ class ProductController extends Controller
             $data['image'] = $request->file('image')->store('products', 'public');
         }
 
-        // 5. Simpan ke database
-        Product::create($data);
+        DB::transaction(function () use ($data, $request): void {
+            $product = Product::create($data);
+
+            if ((int) $product->stock > 0) {
+                StockMovement::create([
+                    'product_id' => $product->id,
+                    'user_id' => $request->user()->id,
+                    'movement_type' => 'initial_stock',
+                    'quantity_in' => $product->stock,
+                    'balance_after' => $product->stock,
+                    'reference' => 'INITIAL-'.$product->id,
+                    'notes' => 'Stok awal saat produk dibuat.',
+                ]);
+            }
+        });
 
         return redirect()->route('products.index')->with('success', 'Produk skincare berhasil ditambahkan!');
     }
@@ -187,7 +202,7 @@ class ProductController extends Controller
                 'max:2147483647',
             ],
             'price_source' => 'nullable|in:selling_price,margin_percent,unchanged',
-            'stock' => 'required|integer|min:0',
+            'stock' => ['prohibited'],
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Validasi gambar
         ]);
 
@@ -203,7 +218,6 @@ class ProductController extends Controller
             'purchase_price' => $request->input('purchase_price'),
             'margin_percent' => $marginPercent,
             'selling_price' => $sellingPrice,
-            'stock' => $request->stock,
         ];
 
         // 4. Proses Update Gambar jika ada yang baru diupload

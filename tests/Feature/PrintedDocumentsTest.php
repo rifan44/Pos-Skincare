@@ -52,9 +52,12 @@ class PrintedDocumentsTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($admin)
-            ->get(route('reports.pdf'))
+            ->get(route('reports.pdf', [
+                'start_date' => now()->toDateString(),
+                'end_date' => now()->toDateString(),
+            ]))
             ->assertOk()
-            ->assertSee('Laporan Penjualan dan Retur')
-            ->assertSee('window.print()');
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('content-disposition');
     }
 }

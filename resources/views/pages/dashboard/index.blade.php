@@ -84,7 +84,7 @@
                             <span class="badge bg-danger rounded-pill px-3 py-2 shadow-sm">{{ $produk->stock }} Tersisa</span>
                         </td>
                         <td class="px-4 py-3 text-end">
-                            <a href="{{ route('products.edit', $produk->id) }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-medium">Restock</a>
+                            <a href="{{ route('stock-adjustments.create', ['product_id' => $produk->id]) }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-medium">Restock</a>
                         </td>
                     </tr>
                     @empty
@@ -94,6 +94,36 @@
                             Kondisi stok aman. Tidak ada produk yang menipis.
                         </td>
                     </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center mb-3 mt-4">
+        <i class="fas fa-calendar-xmark text-danger fs-5 me-2"></i>
+        <h5 class="fw-bold text-dark mb-0 font-serif">Produk Segera Kedaluwarsa</h5>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4 py-3">Nama Produk</th>
+                        <th class="px-4 py-3">Tanggal Kedaluwarsa</th>
+                        <th class="px-4 py-3 text-center">Sisa Stok</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($produkSegeraExpired ?? [] as $produk)
+                    <tr>
+                        <td class="px-4 py-3 fw-bold">{{ $produk->name }}</td>
+                        <td class="px-4 py-3 text-danger">{{ \Carbon\Carbon::parse($produk->expired_date)->format('d M Y') }}</td>
+                        <td class="px-4 py-3 text-center">{{ $produk->stock }} unit</td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="3" class="text-center text-muted py-4">Tidak ada produk yang kedaluwarsa dalam 30 hari.</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -66,6 +66,14 @@
         max-height: 500px;
         object-fit: contain;
     }
+    .landing-image-placeholder {
+        min-height: 320px;
+        background-color: var(--surface-alt);
+        color: var(--primary-color);
+    }
+    .landing-image-placeholder i {
+        font-size: 6rem;
+    }
     .about-panel {
         position: relative;
         isolation: isolate;
@@ -234,8 +242,8 @@
                         <img src="{{ asset('storage/' . $appSetting->landing_image) }}" class="hero-image rounded-4 shadow" alt="Tampilan {{ $appSetting->store_name ?? 'toko skincare' }}" fetchpriority="high">
                     </div>
                 @else
-                    <div class="rounded-4 d-flex align-items-center justify-content-center w-100" style="background-color: #f0e9e4; min-height: 320px;">
-                        <i class="fas fa-spa" style="font-size: 6rem; color: #fff;"></i>
+                    <div class="landing-image-placeholder rounded-4 d-flex align-items-center justify-content-center w-100">
+                        <i class="fas fa-spa"></i>
                     </div>
                 @endif
             </div>

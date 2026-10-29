@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use App\Models\TransactionReturn;
+use App\Models\StockMovement;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -222,7 +223,25 @@ class TransactionReturnController extends Controller
                             ]);
                         }
 
+                        if ($product->trashed()) {
+                            throw ValidationException::withMessages([
+                                'items' => 'Produk yang sudah dihapus tidak dapat menerima stok retur. Pulihkan produk atau retur tanpa memasukkan kembali ke stok.',
+                            ]);
+                        }
+
                         $product->increment('stock', $line['restocked_quantity']);
+                        $product->refresh();
+                        StockMovement::create([
+                            'product_id' => $product->id,
+                            'user_id' => $request->user()->id,
+                            'movement_type' => 'return_in',
+                            'quantity_in' => $line['restocked_quantity'],
+                            'balance_after' => $product->stock,
+                            'source_type' => TransactionReturn::class,
+                            'source_id' => $refund->id,
+                            'reference' => 'RET-'.$refund->id,
+                            'notes' => 'Stok kembali dari retur penjualan.',
+                        ]);
                     }
                 }
 

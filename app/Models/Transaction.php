@@ -9,7 +9,17 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['subtotal_amount', 'discount_amount', 'total_amount', 'pay_amount'];
+    protected $fillable = [
+        'subtotal_amount',
+        'discount_amount',
+        'total_amount',
+        'pay_amount',
+        'customer_type',
+        'payment_method',
+        'customer_name',
+        'customer_phone',
+        'customer_id',
+    ];
 
     protected static function booted(): void
     {
@@ -29,6 +39,11 @@ class Transaction extends Model
     public function returns()
     {
         return $this->hasMany(TransactionReturn::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function getRefundedAmountAttribute(): int

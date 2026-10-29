@@ -73,8 +73,8 @@ class CategoryController extends Controller
         ]);
 
         if ($data['category_type'] !== $category->category_type) {
-            $hasProducts = $category->products()->withTrashed()->exists()
-                || $category->brandProducts()->withTrashed()->exists();
+            $hasProducts = $category->products()->exists()
+                || $category->brandProducts()->exists();
 
             if ($hasProducts) {
                 throw ValidationException::withMessages([
@@ -93,8 +93,8 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        $hasProducts = $category->products()->withTrashed()->exists()
-            || $category->brandProducts()->withTrashed()->exists();
+        $hasProducts = $category->products()->exists()
+            || $category->brandProducts()->exists();
 
         if ($hasProducts) {
             return redirect()->route('categories.index')->withErrors([

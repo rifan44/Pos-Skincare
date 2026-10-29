@@ -71,7 +71,7 @@
                                     Edit
                                 </button>
                                 @if($user->id !== auth()->id())
-                                    <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="m-0" onsubmit="return confirm('Yakin ingin menghapus akun {{ $user->name }}?');">
+                                    <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="m-0" data-confirm-delete data-confirm-title="Hapus akun?" data-confirm-text="Akun {{ $user->name }} akan dihapus dari daftar aktif.">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-medium">Hapus</button>
                                     </form>

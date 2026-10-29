@@ -173,6 +173,20 @@ class CheckoutTest extends TestCase
         $this->assertSame(5, $product->fresh()->stock);
     }
 
+    public function test_report_can_be_downloaded_as_csv(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->get(route('reports.csv', [
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->toDateString(),
+        ]));
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8')
+            ->assertHeader('content-disposition');
+    }
+
     public function test_invalid_quantities_and_duplicate_products_are_rejected(): void
     {
         $user = User::factory()->create(['role' => 'kasir']);

@@ -55,8 +55,8 @@
                 
                 <div class="col-md-6">
                     <label class="fw-bold small text-muted mb-1">Stok Tersedia</label>
-                    <input type="number" name="stock" class="form-control bg-light" value="{{ old('stock', $product->stock) }}" required min="0">
-                    @error('stock')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                    <div class="form-control bg-light text-muted">{{ number_format($product->stock, 0, ',', '.') }} unit</div>
+                    <div class="form-text">Gunakan menu Inventori &gt; Penyesuaian Stok agar setiap perubahan tercatat di ledger.</div>
                 </div>
                 
                 <div class="col-md-6">

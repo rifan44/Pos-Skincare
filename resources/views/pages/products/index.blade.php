@@ -92,7 +92,7 @@
                                 <a href="{{ route('products.edit', $product->id) }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-medium">
                                     Edit
                                 </a>
-                                <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="m-0" onsubmit="return confirm('Yakin ingin menghapus produk ini?');">
+                                <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="m-0" data-confirm-delete data-confirm-title="Hapus produk?" data-confirm-text="Produk {{ $product->name }} akan dihapus dari daftar aktif.">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-medium">
                                         Hapus
