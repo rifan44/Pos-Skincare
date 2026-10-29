@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/catalog', [ManagementHubController::class, 'catalog'])->name('catalog.index');
         Route::get('/inventory', [ManagementHubController::class, 'inventory'])->name('inventory.index');
+        Route::get('/finance', [ManagementHubController::class, 'finance'])->name('finance.index');
         Route::resource('categories', CategoryController::class)->except(['show']);
         Route::resource('products', ProductController::class)->except(['show']);
         Route::resource('users', UserController::class)->except(['show', 'create', 'edit']);

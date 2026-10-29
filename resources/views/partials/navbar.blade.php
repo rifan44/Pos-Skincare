@@ -41,9 +41,10 @@
                             <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ request()->routeIs('dashboard.*') ? 'fw-bold' : '' }}" style="{{ request()->routeIs('dashboard.*') ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('dashboard.index') }}">Dashboard</a></li>
                             @php($catalogActive = request()->routeIs('catalog.*', 'categories.*', 'products.*'))
                             <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ $catalogActive ? 'fw-bold' : '' }}" style="{{ $catalogActive ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('catalog.index') }}">Katalog</a></li>
-                            @php($inventoryActive = request()->routeIs('inventory.*', 'suppliers.*', 'purchases.*', 'stock-movements.*'))
+                            @php($inventoryActive = request()->routeIs('inventory.*', 'suppliers.*', 'purchases.*', 'stock-movements.*', 'stock-adjustments.*'))
                             <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ $inventoryActive ? 'fw-bold' : '' }}" style="{{ $inventoryActive ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('inventory.index') }}">Inventori</a></li>
-                            <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ request()->routeIs('reports.*') ? 'fw-bold' : '' }}" style="{{ request()->routeIs('reports.*') ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('reports.index') }}">Laporan</a></li>
+                            @php($financeActive = request()->routeIs('finance.*', 'reports.*', 'debts.*'))
+                            <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ $financeActive ? 'fw-bold' : '' }}" style="{{ $financeActive ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('finance.index') }}">Keuangan</a></li>
                         @endif
                         <li class="nav-item"><a class="nav-link fw-medium px-3 py-2 rounded-pill {{ request()->routeIs('history.*') ? 'fw-bold' : '' }}" style="{{ request()->routeIs('history.*') ? 'background-color: #f7f3ef; color: var(--primary-color);' : 'color: var(--text-muted);' }}" href="{{ route('history.index') }}">Riwayat</a></li>
                     @else

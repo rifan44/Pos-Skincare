@@ -52,16 +52,6 @@
                 <i class="fas fa-arrow-right management-card-arrow"></i>
             </a>
         </div>
-        <div class="col-md-6 col-xl-4">
-            <a href="{{ route('debts.index') }}" class="management-card">
-                <span class="management-card-icon"><i class="fas fa-hand-holding-dollar"></i></span>
-                <span class="management-card-content">
-                    <strong>Utang & Piutang</strong>
-                    <small>Catat kewajiban supplier dan tagihan customer beserta pembayarannya.</small>
-                </span>
-                <i class="fas fa-arrow-right management-card-arrow"></i>
-            </a>
-        </div>
     </div>
 </div>
 

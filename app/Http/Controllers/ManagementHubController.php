@@ -15,4 +15,9 @@ class ManagementHubController extends Controller
     {
         return view('pages.management.inventory');
     }
+
+    public function finance(): View
+    {
+        return view('pages.management.finance');
+    }
 }
